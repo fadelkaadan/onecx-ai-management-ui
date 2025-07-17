@@ -1,8 +1,12 @@
-export default {
+/* eslint-disable */
+import type { Config } from 'jest'
+
+const config: Config = {
   displayName: 'onecx-ai',
   preset: './jest.preset.js',
+  verbose: false,
   setupFilesAfterEnv: ['<rootDir>/src/test-setup.ts'],
-  coverageDirectory: './reports/coverage/',
+  testMatch: ['<rootDir>/src/app/**/*.spec.ts'],
   transform: {
     '^.+\\.(ts|mjs|js|html)$': [
       'jest-preset-angular',
@@ -18,16 +22,23 @@ export default {
     'jest-preset-angular/build/serializers/ng-snapshot',
     'jest-preset-angular/build/serializers/html-comment'
   ],
-  testMatch: ['<rootDir>/src/**/__tests__/**/*.[jt]s?(x)', '<rootDir>/src/**/*(*.)@(spec|test).[jt]s?(x)'],
+  collectCoverage: true,
+  coverageDirectory: '<rootDir>/reports/coverage/',
+  coveragePathIgnorePatterns: ['src/app/shared/generated'],
+  coverageReporters: ['json', 'lcov', 'text', 'text-summary', 'html'],
+  testResultsProcessor: 'jest-sonar-reporter',
+  testPathIgnorePatterns: ['<rootDir>/src/app/shared/'],
   reporters: [
     'default',
     [
       'jest-sonar',
       {
-        outputDirectory: './reports/',
+        outputDirectory: './reports',
         outputName: 'sonarqube_report.xml',
         reportedFilePath: 'absolute'
       }
     ]
   ]
 }
+
+export default config
