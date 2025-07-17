@@ -6,6 +6,15 @@ export const initialState: AiContextDetailsState = {
   details: undefined,
   detailsLoadingIndicator: true,
   detailsLoaded: false,
+  providers: [],
+  providersLoadingIndicator: true,
+  providersLoaded: false,
+  aiKnowledgeBases: [],
+  aiKnowledgeBasesLoadingIndicator: true,
+  aiKnowledgeBasesLoaded: false,
+  knowledgeVectorDbs: [],
+  knowledgeVectorDbsLoadingIndicator: true,
+  knowledgeVectorDbsLoaded: false,
   backNavigationPossible: true,
   editMode: false,
   isSubmitting: false
@@ -19,7 +28,7 @@ export const aiContextDetailsReducer = createReducer(
       ...state,
       details,
       detailsLoadingIndicator: false,
-      detailsLoaded: true
+      detailsLoaded: true,
     })
   ),
   on(
@@ -28,7 +37,34 @@ export const aiContextDetailsReducer = createReducer(
       ...state,
       details: undefined,
       detailsLoadingIndicator: false,
-      detailsLoaded: false
+      detailsLoaded: false,
+    })
+  ),
+  on(
+    AiContextDetailsActions.aiContextProvidersReceived,
+    (state: AiContextDetailsState, { providers }): AiContextDetailsState => ({
+      ...state,
+      providers,
+      providersLoadingIndicator: false,
+      providersLoaded: true
+    })
+  ),
+  on(
+    AiContextDetailsActions.aiContextProvidersLoadingFailed,
+    (state: AiContextDetailsState): AiContextDetailsState => ({
+      ...state,
+      providers: [],
+      providersLoadingIndicator: false,
+      providersLoaded: false
+    })
+  ),
+  on(
+    AiContextDetailsActions.aiContextAiKnowledgeBasesReceived,
+    (state: AiContextDetailsState, { aiKnowledgeBases }): AiContextDetailsState => ({
+      ...state,
+      aiKnowledgeBases,
+      aiKnowledgeBasesLoadingIndicator: false,
+      aiKnowledgeBasesLoaded: true
     })
   ),
   on(
@@ -41,11 +77,20 @@ export const aiContextDetailsReducer = createReducer(
     AiContextDetailsActions.editButtonClicked,
     (state: AiContextDetailsState): AiContextDetailsState => ({
       ...state,
-      editMode: true
+      editMode: true,
     })
   ),
   on(
     AiContextDetailsActions.saveButtonClicked,
+    (state: AiContextDetailsState, { details }): AiContextDetailsState => ({
+      ...state,
+      details,
+      editMode: false,
+      isSubmitting: true
+    })
+  ),
+  on(
+    AiContextDetailsActions.navigateBackButtonClicked,
     (state: AiContextDetailsState): AiContextDetailsState => ({
       ...state,
       isSubmitting: true
@@ -58,7 +103,8 @@ export const aiContextDetailsReducer = createReducer(
     AiContextDetailsActions.updateAiContextSucceeded,
     (state: AiContextDetailsState): AiContextDetailsState => ({
       ...state,
-      editMode: false
+      editMode: false,
+      isSubmitting: false
     })
   ),
   on(

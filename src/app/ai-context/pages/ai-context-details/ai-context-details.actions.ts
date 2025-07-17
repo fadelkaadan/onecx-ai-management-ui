@@ -1,5 +1,5 @@
 import { createActionGroup, emptyProps, props } from '@ngrx/store'
-import { AIContext } from '../../../shared/generated'
+import { AIContext, AIKnowledgeBase, AIKnowledgeVectorDb, AIProvider } from '../../../shared/generated'
 
 export const AiContextDetailsActions = createActionGroup({
   source: 'AIContextDetails',
@@ -14,6 +14,31 @@ export const AiContextDetailsActions = createActionGroup({
       details: AIContext
     }>(),
     'ai context details loading failed': props<{ error: string | null }>(),
+
+    'ai context providers received': props<{
+      providers: AIProvider[]
+    }>(),
+    'ai context reloaded providers received': props<{
+      providers: AIProvider[]
+    }>(),
+    'ai context providers loading failed': props<{ error: string | null }>(),
+
+    'ai context aiKnowledgeBases received': props<{
+      aiKnowledgeBases: AIKnowledgeBase[]
+    }>(),
+    'ai context reloaded aiKnowledgeBases received': props<{
+      aiKnowledgeBases: AIKnowledgeBase[]
+    }>(),
+    'ai context aiKnowledgeBases loading failed': props<{ error: string | null }>(),
+
+    'ai context knowledgeVectorDbs received': props<{
+      knowledgeVectorDbs: AIKnowledgeVectorDb[]
+    }>(),
+    'ai context reloaded knowledgeVectorDbs received': props<{
+      knowledgeVectorDbs: AIKnowledgeVectorDb[]
+    }>(),
+    'ai context knowledgeVectorDbs loading failed': props<{ error: string | null }>(),
+
     'edit mode set': props<{ editMode: boolean }>(),
     'Update ai context cancelled': emptyProps(),
     'Update ai context succeeded': emptyProps(),

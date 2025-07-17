@@ -10,7 +10,17 @@ import { PrimeIcons } from 'primeng/api'
 import { catchError, filter, map, mergeMap, of, switchMap, tap } from 'rxjs'
 import { selectBackNavigationPossible } from 'src/app/shared/selectors/onecx.selectors'
 import { selectRouteParam, selectUrl } from 'src/app/shared/selectors/router.selectors'
-import { AIContext, AIContextBffService, UpdateAIContextRequest } from '../../../shared/generated'
+import {
+  AIContext,
+  AIContextBffService,
+  AIProviderBffService,
+  AiKnowledgeBaseBffService,
+  AIProviderSearchRequest,
+  UpdateAIContextRequest,
+  AIKnowledgeVectorDbBffService,
+  SearchAIKnowledgeBaseRequest,
+  SearchAIKnowledgeVectorDbRequest
+} from '../../../shared/generated'
 import { AiContextDetailsActions } from './ai-context-details.actions'
 import { AiContextDetailsComponent } from './ai-context-details.component'
 import { aiContextDetailsSelectors } from './ai-context-details.selectors'
@@ -19,6 +29,9 @@ export class AiContextDetailsEffects {
   constructor(
     private actions$: Actions,
     private aiContextService: AIContextBffService,
+    private aiProviderService: AIProviderBffService,
+    private aiKnowledgeBaseService: AiKnowledgeBaseBffService,
+    private aiKnowledgeVectorDB: AIKnowledgeVectorDbBffService,
     private router: Router,
     private store: Store,
     private messageService: PortalMessageService,
@@ -57,6 +70,75 @@ export class AiContextDetailsEffects {
           )
         )
       )
+    )
+  })
+
+  loadAIKnowledgeBaseById$ = createEffect(() => {
+    return this.actions$.pipe(
+      ofType(AiContextDetailsActions.navigatedToDetailsPage),
+      switchMap(() => {
+        const fetchAllReq: SearchAIKnowledgeBaseRequest = { id: undefined, name: '', description: '' }
+        return this.aiKnowledgeBaseService.searchAIKnowledgeBases(fetchAllReq).pipe(
+          map(({ stream }) =>
+            AiContextDetailsActions.aiContextAiKnowledgeBasesReceived({
+              aiKnowledgeBases: stream
+            })
+          ),
+          catchError((error) =>
+            of(
+              AiContextDetailsActions.aiContextAiKnowledgeBasesLoadingFailed({
+                error
+              })
+            )
+          )
+        )
+      })
+    )
+  })
+
+  loadProviderById$ = createEffect(() => {
+    return this.actions$.pipe(
+      ofType(AiContextDetailsActions.navigatedToDetailsPage),
+      switchMap(() => {
+        const fetchAllReq: AIProviderSearchRequest = { id: undefined, appId: '', name: '', description: '' }
+        return this.aiProviderService.searchAIProvider(fetchAllReq).pipe(
+          map(({ results }) =>
+            AiContextDetailsActions.aiContextProvidersReceived({
+              providers: results
+            })
+          ),
+          catchError((error) =>
+            of(
+              AiContextDetailsActions.aiContextProvidersLoadingFailed({
+                error
+              })
+            )
+          )
+        )
+      })
+    )
+  })
+
+  loadVectorDbById$ = createEffect(() => {
+    return this.actions$.pipe(
+      ofType(AiContextDetailsActions.navigatedToDetailsPage),
+      switchMap(() => {
+        const fetchAllReq: SearchAIKnowledgeVectorDbRequest = { id: undefined, name: '', description: '' }
+        return this.aiKnowledgeVectorDB.searchAIKnowledgeVectorDbs(fetchAllReq).pipe(
+          map(({ results }) =>
+            AiContextDetailsActions.aiContextKnowledgeVectorDbsReceived({
+              knowledgeVectorDbs: results
+            })
+          ),
+          catchError((error) =>
+            of(
+              AiContextDetailsActions.aiContextKnowledgeVectorDbsLoadingFailed({
+                error
+              })
+            )
+          )
+        )
+      })
     )
   })
 

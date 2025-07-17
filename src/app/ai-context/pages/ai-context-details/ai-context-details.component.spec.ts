@@ -69,7 +69,16 @@ describe('AiContextDetailsComponent', () => {
     detailsLoaded: true,
     backNavigationPossible: true,
     editMode: false,
-    isSubmitting: false
+    isSubmitting: false,
+    aiProviders: undefined,
+    aiProvidersLoaded: false,
+    aiProvidersLoadingIndicator: false,
+    aiKnowledgeBases: undefined,
+    aiKnowledgeBasesLoaded: false,
+    aiKnowledgeBasesLoadingIndicator: false,
+    knowledgeVectorDbs: undefined,
+    knowledgeVectorDbsLoaded: false,
+    knowledgeVectorDbsLoadingIndicator: false
   }
 
   beforeEach(async () => {

@@ -59,6 +59,16 @@ app:
             VIEW: View mode for aiContext
             SEARCH: Search aiContext
             BACK: Back to aiContext
+          AI_KNOWLEDGE_BASE:
+            CREATE: Create AIKnowledgeBase
+            EDIT: Edit AIKnowledgeBase
+            DELETE: Delete AIKnowledgeBase
+            SAVE: Update and save AIKnowledgeBase
+            IMPORT: Import AIKnowledgeBase
+            EXPORT: Export AIKnowledgeBase
+            VIEW: View mode for AIKnowledgeBase
+            SEARCH: Search AIKnowledgeBase
+            BACK: Back to AIKnowledgeBase
     keycloak:
       client:
         enabled: true

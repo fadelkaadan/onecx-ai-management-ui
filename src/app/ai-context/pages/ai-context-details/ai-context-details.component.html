@@ -67,7 +67,7 @@
               <p-autoComplete
                 id="aiContext_detail_knowledgeBase"
                 formControlName="AIKnowledgeBase"
-                [suggestions]="knowledgeBaseSuggestions"
+                [suggestions]="(filteredKnowledgeBases$ | async) ?? []"
                 (completeMethod)="searchKnowledgeBases($event)"
                 [dropdown]="true"
                 [field]="'name'"
@@ -87,7 +87,7 @@
               <p-autoComplete
                 id="aiContext_detail_provider"
                 formControlName="provider"
-                [suggestions]="providerSuggestions"
+                [suggestions]="(filteredProviders$ | async) ?? []"
                 (completeMethod)="searchProviders($event)"
                 [dropdown]="true"
                 [field]="'name'"
@@ -107,7 +107,7 @@
               <p-autoComplete
                 id="aiContext_detail_vectorDb"
                 formControlName="aIKnowledgeVectorDb"
-                [suggestions]="vectorDbSuggestions"
+                [suggestions]="(filteredVectorDbs$ | async) ?? []"
                 (completeMethod)="searchVectorDbs($event)"
                 [dropdown]="true"
                 [field]="'name'"

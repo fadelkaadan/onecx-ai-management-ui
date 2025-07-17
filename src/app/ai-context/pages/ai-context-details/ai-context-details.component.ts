@@ -1,8 +1,7 @@
 import { Component, OnInit } from '@angular/core'
 import { Store } from '@ngrx/store'
 import { Action, BreadcrumbService, ObjectDetailItem } from '@onecx/portal-integration-angular'
-import { map, Observable } from 'rxjs'
-
+import { map, Observable, BehaviorSubject, combineLatest } from 'rxjs'
 import { FormControl, FormGroup, Validators } from '@angular/forms'
 import { PrimeIcons } from 'primeng/api'
 import { AiContextDetailsActions } from './ai-context-details.actions'
@@ -39,7 +38,9 @@ export class AiContextDetailsComponent implements OnInit {
           titleKey: 'AI_CONTEXT_DETAILS.GENERAL.BACK',
           labelKey: 'AI_CONTEXT_DETAILS.GENERAL.BACK',
           show: 'always',
+          disabled: !vm.backNavigationPossible,
           icon: PrimeIcons.ARROW_LEFT,
+          conditional: true,
           showCondition: !vm.editMode,
           actionCallback: () => {
             this.goBack()
@@ -50,6 +51,7 @@ export class AiContextDetailsComponent implements OnInit {
           labelKey: 'AI_CONTEXT_DETAILS.GENERAL.EDIT',
           show: 'always',
           icon: PrimeIcons.PENCIL,
+          conditional: true,
           showCondition: !vm.editMode,
           actionCallback: () => {
             this.edit()
@@ -98,16 +100,17 @@ export class AiContextDetailsComponent implements OnInit {
 
   public formGroup: FormGroup
 
-  providers$: Observable<AIProvider[]> = this.viewModel$.pipe(map((vm) => vm.details?.provider || []))
-  providerSuggestions: AIProvider[] = []
+  providersSuggestions$: Observable<AIProvider[]>
+  providerQuery$: BehaviorSubject<string> = new BehaviorSubject<string>('')
+  filteredProviders$: Observable<AIProvider[]>
 
-  knowledgeBases$: Observable<AIKnowledgeBase[]> = this.viewModel$.pipe(map((vm) => vm.details?.AIKnowledgeBase || []))
-  knowledgeBaseSuggestions: AIKnowledgeBase[] = []
+  knowledgeBaseSuggestions$: Observable<AIKnowledgeBase[]>
+  knowledgeBaseQuery$: BehaviorSubject<string> = new BehaviorSubject<string>('')
+  filteredKnowledgeBases$: Observable<AIKnowledgeBase[]>
 
-  vectorDbs$: Observable<AIKnowledgeVectorDb[]> = this.viewModel$.pipe(
-    map((vm) => vm.details?.aIKnowledgeVectorDb || [])
-  )
-  vectorDbSuggestions: AIKnowledgeVectorDb[] = []
+  vectorDbSuggestions$: Observable<AIKnowledgeVectorDb[]>
+  vectorDbQuery$: BehaviorSubject<string> = new BehaviorSubject<string>('')
+  filteredVectorDbs$: Observable<AIKnowledgeVectorDb[]>
 
   knowledgeUrlOptions$: Observable<AIKnowledgeUrl[]> = this.viewModel$.pipe(
     map((vm) => vm.details?.aIKnowledgeUrl || [])
@@ -123,6 +126,62 @@ export class AiContextDetailsComponent implements OnInit {
     private store: Store,
     private breadcrumbService: BreadcrumbService
   ) {
+    this.providersSuggestions$ = this.viewModel$.pipe(
+      map(({ details, aiProviders }) => {
+        const selectedProviders = Array.isArray(details?.provider) ? details.provider : []
+        const allProviders = aiProviders?.filter((ctx) => !selectedProviders.some((c) => c.id === ctx.id))
+        if (!allProviders || allProviders.length === 0) {
+          return selectedProviders
+        }
+        return [...selectedProviders, ...allProviders]
+      })
+    )
+    this.providerQuery$ = new BehaviorSubject<string>('')
+    this.filteredProviders$ = combineLatest([this.providersSuggestions$, this.providerQuery$]).pipe(
+      map(([providers, query]) =>
+        providers.filter((p) => (p.name + ' ' + p.appId).toLowerCase().includes(query.toLowerCase()))
+      )
+    )
+
+    this.knowledgeBaseSuggestions$ = this.viewModel$.pipe(
+      map(({ details, aiKnowledgeBases }) => {
+        const selectedKnowledgeBases = Array.isArray(details?.AIKnowledgeBase) ? details.AIKnowledgeBase : []
+        const allKnowledgeBases = aiKnowledgeBases?.filter(
+          (ctx) => !selectedKnowledgeBases.some((c) => c.id === ctx.id)
+        )
+        if (!allKnowledgeBases || allKnowledgeBases.length === 0) {
+          return selectedKnowledgeBases
+        }
+        return [...selectedKnowledgeBases, ...allKnowledgeBases]
+      })
+    )
+    this.knowledgeBaseQuery$ = new BehaviorSubject<string>('')
+    this.filteredKnowledgeBases$ = combineLatest([this.knowledgeBaseSuggestions$, this.knowledgeBaseQuery$]).pipe(
+      map(([knowledgeBases, query]) =>
+        knowledgeBases.filter((kb) => (kb.name + ' ' + kb.appId).toLowerCase().includes(query.toLowerCase()))
+      )
+    )
+
+    this.vectorDbSuggestions$ = this.viewModel$.pipe(
+      map(({ details, knowledgeVectorDbs }) => {
+        const selectedVectorDbs = Array.isArray(details?.aIKnowledgeVectorDb) ? details.aIKnowledgeVectorDb : []
+        // There is no allVectorDbs property in the view model, so fallback to []
+        const allVectorDbs = knowledgeVectorDbs?.filter((ctx) => !selectedVectorDbs.some((c) => c.id === ctx.id))
+        if (!allVectorDbs || allVectorDbs.length === 0) {
+          return selectedVectorDbs
+        }
+        return [...selectedVectorDbs, ...allVectorDbs]
+      })
+    )
+    this.vectorDbQuery$ = new BehaviorSubject<string>('')
+    this.filteredVectorDbs$ = combineLatest([this.vectorDbSuggestions$, this.vectorDbQuery$]).pipe(
+      map(([vectorDbs, query]) =>
+        vectorDbs.filter((vdb) =>
+          (vdb.name + ' ' + (vdb.description || '')).toLowerCase().includes(query.toLowerCase())
+        )
+      )
+    )
+
     this.formGroup = new FormGroup({
       id: new FormControl('', [Validators.maxLength(255)]),
       appId: new FormControl('', [Validators.required]),
@@ -172,32 +231,15 @@ export class AiContextDetailsComponent implements OnInit {
   }
 
   searchKnowledgeBases(event: { query: string }) {
-    const query = event.query.toLowerCase()
-    this.knowledgeBases$
-      .subscribe((bases) => {
-        this.knowledgeBaseSuggestions = bases.filter((kb) => (kb.name + ' ' + kb.appId).toLowerCase().includes(query))
-      })
-      .unsubscribe()
+    this.knowledgeBaseQuery$.next(event.query)
   }
 
   searchProviders(event: { query: string }) {
-    const query = event.query.toLowerCase()
-    this.providers$
-      .subscribe((providers) => {
-        this.providerSuggestions = providers.filter((p) => (p.name + ' ' + p.appId).toLowerCase().includes(query))
-      })
-      .unsubscribe()
+    this.providerQuery$.next(event.query)
   }
 
   searchVectorDbs(event: { query: string }) {
-    const query = event.query.toLowerCase()
-    this.vectorDbs$
-      .subscribe((vectorDbs) => {
-        this.vectorDbSuggestions = vectorDbs.filter((vdb) =>
-          (vdb.name + ' ' + (vdb.description || '')).toLowerCase().includes(query)
-        )
-      })
-      .unsubscribe()
+    this.vectorDbQuery$.next(event.query)
   }
 
   edit() {
