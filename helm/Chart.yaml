@@ -1,15 +1,17 @@
 apiVersion: v2
-name: onecx-ai-ui
+name: onecx-ai-management-ui
 version: 0.0.0
-description: onecx-ai-ui UI
-home: https://github.com/onecx/onecx-ai-ui
+description: onecx-ai-management-ui UI
+home: https://github.com/onecx-apps/onecx-ai-management-ui
 keywords:
-  - onecx-ai-ui
+  - onecx-ai-management-ui
+  - Angular
+  - OneCX
 sources:
-  - https://github.com/onecx/onecx-ai-ui
+  - https://github.com/onecx-apps/onecx-ai-management-ui
 maintainers:
-  - name: # ACTION: add name of maintainer
-    email: # ACTION: add email of maintainer
+  - name: OneCX Developer Team
+    email: tkit_dev@1000kit.org
 dependencies:
   - name: helm-angular-app
     version: ^0

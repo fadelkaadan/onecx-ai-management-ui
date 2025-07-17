@@ -1,6 +1,6 @@
 openapi: 3.0.3
 info:
-  title: onecx-ai-ui-bff
+  title: onecx-ai-management-bff
   version: '1.0'
   description: Updated on 05.06.2025 at 08:41
 paths:

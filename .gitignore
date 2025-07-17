@@ -3,10 +3,9 @@
 # compiled output
 dist
 tmp
+reports
 /out-tsc
-.github/instructions
-.eslintcache
-
+test-report.xml
 # dependencies
 node_modules
 
@@ -37,13 +36,12 @@ npm-debug.log
 yarn-error.log
 testem.log
 /typings
-.husky/_
+.github/instructions
+.eslintcache
 
 # System Files
 .DS_Store
 Thumbs.db
 
-.nx/cache
-.nx/workspace-data
-
+.nx
 .angular

@@ -10,7 +10,7 @@ import { ofType } from '@ngrx/effects'
 import { Store, StoreModule } from '@ngrx/store'
 import { MockStore, provideMockStore } from '@ngrx/store/testing'
 import { TranslateService } from '@ngx-translate/core'
-import { BreadcrumbService, ColumnType, PortalCoreModule, UserService } from '@onecx/portal-integration-angular'
+import { BreadcrumbService, ColumnType, PortalCoreModule, RowListGridData, UserService } from '@onecx/portal-integration-angular'
 import { TranslateTestingModule } from 'ngx-translate-testing'
 import { DialogService } from 'primeng/dynamicdialog'
 import { AIKnowledgeVectorDbSearchActions } from './ai-knowledge-vector-db-search.actions'
@@ -21,7 +21,7 @@ import { initialState } from './ai-knowledge-vector-db-search.reducers'
 import { selectAIKnowledgeVectorDbSearchViewModel } from './ai-knowledge-vector-db-search.selectors'
 import { AIKnowledgeVectorDbSearchViewModel } from './ai-knowledge-vector-db-search.viewmodel'
 import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http'
-
+import * as selectors from './ai-knowledge-vector-db-search.selectors'
 describe('AIKnowledgeVectorDbSearchComponent', () => {
   const origAddEventListener = window.addEventListener
   const origPostMessage = window.postMessage
@@ -378,6 +378,161 @@ describe('AIKnowledgeVectorDbSearchComponent', () => {
     )
   })
 
+
+  it('should dispatch detailsButtonClicked action on details', () => {
+    jest.spyOn(store, 'dispatch')
+    const row: RowListGridData = { id: 'test-id', imagePath:'' }
+    component.details(row)
+    expect(store.dispatch).toHaveBeenCalledWith(
+      AIKnowledgeVectorDbSearchActions.detailsButtonClicked({ id: 'test-id' })
+    )
+  })
+
+  it('should convert Date values to UTC and dispatch searchButtonClicked with correct searchCriteria', () => {
+    jest.spyOn(store, 'dispatch')
+    const formValue = {
+      name: 'testName',
+      description: 'testDescription',
+      vdb: 'vdb1',
+      vdbCollection: 'collection1',
+      id: 1,
+      limit: 10
+    }
+    component.AIKnowledgeVectorDbSearchFormGroup = {
+      value: formValue,
+      getRawValue: () => formValue
+    } as any
+  
+    component.search(component.AIKnowledgeVectorDbSearchFormGroup)
+  
+    expect(store.dispatch).toHaveBeenCalledWith(
+      AIKnowledgeVectorDbSearchActions.searchButtonClicked({
+        searchCriteria: {
+          name: 'testName',
+          description: 'testDescription',
+          vdb: 'vdb1',
+          vdbCollection: 'collection1',
+          id: 1,
+          limit: 10
+        }
+      })
+    )
+  })
+  it('should pass through non-date, non-empty values unchanged in searchCriteria', () => {
+    jest.spyOn(store, 'dispatch')
+    const formValue = {
+      name: 'testName', // not a Date, not empty
+    }
+    component.AIKnowledgeVectorDbSearchFormGroup = {
+      value: formValue,
+      getRawValue: () => formValue
+    } as any
+  
+    component.search(component.AIKnowledgeVectorDbSearchFormGroup)
+  
+    expect(store.dispatch).toHaveBeenCalledWith(
+      AIKnowledgeVectorDbSearchActions.searchButtonClicked({
+        searchCriteria: {
+          name: 'testName'
+        }
+      })
+    )
+  })
+
+  it('should set searchCriteria property to undefined for falsy non-date values', () => {
+    jest.spyOn(store, 'dispatch')
+    const formValue = {
+      name: '', // not a Date, falsy value
+    }
+    component.AIKnowledgeVectorDbSearchFormGroup = {
+      value: formValue,
+      getRawValue: () => formValue
+    } as any
+  
+    component.search(component.AIKnowledgeVectorDbSearchFormGroup)
+  
+    expect(store.dispatch).toHaveBeenCalledWith(
+      AIKnowledgeVectorDbSearchActions.searchButtonClicked({
+        searchCriteria: {
+          name: undefined
+        }
+      })
+    )
+  })
+
+  it('should handle isValidDate true branch for allowed key (using as any for coverage)', () => {
+    jest.spyOn(store, 'dispatch')
+    const testDate = new Date(2024, 4, 15, 12, 30, 45)
+    const formValue = {
+      id: testDate as any // force for coverage only
+    }
+    component.AIKnowledgeVectorDbSearchFormGroup = {
+      value: formValue,
+      getRawValue: () => formValue
+    } as any
+  
+    component.search(component.AIKnowledgeVectorDbSearchFormGroup)
+  
+    expect(store.dispatch).toHaveBeenCalledWith(
+      AIKnowledgeVectorDbSearchActions.searchButtonClicked({
+        searchCriteria: {
+          id: new Date(Date.UTC(
+            testDate.getFullYear(),
+            testDate.getMonth(),
+            testDate.getDate(),
+            testDate.getHours(),
+            testDate.getMinutes(),
+            testDate.getSeconds()
+          )) as any // force for coverage only
+        }
+      })
+    )
+  })
+
+  it('should pass through non-date, non-empty values unchanged in searchCriteria', () => {
+    jest.spyOn(store, 'dispatch')
+    const formValue = {
+      name: 'testName'
+    }
+    component.AIKnowledgeVectorDbSearchFormGroup = {
+      value: formValue,
+      getRawValue: () => formValue
+    } as any
+  
+    component.search(component.AIKnowledgeVectorDbSearchFormGroup)
+  
+    expect(store.dispatch).toHaveBeenCalledWith(
+      AIKnowledgeVectorDbSearchActions.searchButtonClicked({
+        searchCriteria: {
+          name: 'testName'
+        }
+      })
+    )
+  })
+
+  it('should set searchCriteria property to undefined for falsy non-date values', () => {
+    jest.spyOn(store, 'dispatch')
+    const formValue = {
+      name: ''
+    }
+    component.AIKnowledgeVectorDbSearchFormGroup = {
+      value: formValue,
+      getRawValue: () => formValue
+    } as any
+  
+    component.search(component.AIKnowledgeVectorDbSearchFormGroup)
+  
+    expect(store.dispatch).toHaveBeenCalledWith(
+      AIKnowledgeVectorDbSearchActions.searchButtonClicked({
+        searchCriteria: {
+          name: undefined
+        }
+      })
+    )
+  })
+
+
+
   it('should export csv data on export action click', async () => {
     jest.spyOn(store, 'dispatch')
 
@@ -607,4 +762,176 @@ describe('AIKnowledgeVectorDbSearchComponent', () => {
     diagram = await AIKnowledgeVectorDbSearch.getDiagram()
     expect(diagram).toBeTruthy()
   })
+
+  describe('AIKnowledgeVectorDbSearchReducer', () => {
+    const { AIKnowledgeVectorDbSearchReducer, initialState } = require('./ai-knowledge-vector-db-search.reducers')
+    const { AIKnowledgeVectorDbSearchActions } = require('./ai-knowledge-vector-db-search.actions')
+  
+    it('should reset results and criteria on resetButtonClicked', () => {
+      const preState = { ...initialState, results: [{ id: '1' }], criteria: { test: 'val' } }
+      const action = AIKnowledgeVectorDbSearchActions.resetButtonClicked()
+      const state = AIKnowledgeVectorDbSearchReducer(preState, action)
+      expect(state.results).toEqual([])
+      expect(state.criteria).toEqual({})
+    })
+  
+    it('should set searchLoadingIndicator and criteria on searchButtonClicked', () => {
+      const searchCriteria = { name: 'foo' }
+      const action = AIKnowledgeVectorDbSearchActions.searchButtonClicked({ searchCriteria })
+      const state = AIKnowledgeVectorDbSearchReducer(initialState, action)
+      expect(state.searchLoadingIndicator).toBe(true)
+      expect(state.criteria).toEqual(searchCriteria)
+    })
+  
+    it('should set results on aiKnowledgeVectorDbSearchResultsReceived', () => {
+      const results = [{ id: '1' }, { id: '2' }]
+      const action = AIKnowledgeVectorDbSearchActions.aiKnowledgeVectorDbSearchResultsReceived({ results })
+      const state = AIKnowledgeVectorDbSearchReducer(initialState, action)
+      expect(state.results).toEqual(results)
+    })
+  
+    it('should clear results on aiKnowledgeVectorDbSearchResultsLoadingFailed', () => {
+      const preState = { ...initialState, results: [{ id: '1' }] }
+      const action = AIKnowledgeVectorDbSearchActions.aiKnowledgeVectorDbSearchResultsLoadingFailed()
+      const state = AIKnowledgeVectorDbSearchReducer(preState, action)
+      expect(state.results).toEqual([])
+    })
+  
+    it('should set chartVisible on chartVisibilityRehydrated', () => {
+      const action = AIKnowledgeVectorDbSearchActions.chartVisibilityRehydrated({ visible: true })
+      const state = AIKnowledgeVectorDbSearchReducer(initialState, action)
+      expect(state.chartVisible).toBe(true)
+    })
+  
+    it('should toggle chartVisible on chartVisibilityToggled', () => {
+      const preState = { ...initialState, chartVisible: false }
+      const action = AIKnowledgeVectorDbSearchActions.chartVisibilityToggled()
+      const state = AIKnowledgeVectorDbSearchReducer(preState, action)
+      expect(state.chartVisible).toBe(true)
+      const state2 = AIKnowledgeVectorDbSearchReducer(state, action)
+      expect(state2.chartVisible).toBe(false)
+    })
+  
+    it('should set viewMode on viewModeChanged', () => {
+      const action = AIKnowledgeVectorDbSearchActions.viewModeChanged({ viewMode: 'advanced' })
+      const state = AIKnowledgeVectorDbSearchReducer(initialState, action)
+      expect(state.viewMode).toBe('advanced')
+    })
+  
+    it('should set displayedColumns on displayedColumnsChanged', () => {
+      const displayedColumns = [
+        { id: 'col1' },
+        { id: 'col2' }
+      ]
+      const action = AIKnowledgeVectorDbSearchActions.displayedColumnsChanged({ displayedColumns })
+      const state = AIKnowledgeVectorDbSearchReducer(initialState, action)
+      expect(state.displayedColumns).toEqual(['col1', 'col2'])
+    })
+
+    it('should set criteria and searchLoadingIndicator=true when routerNavigatedAction succeeds and queryParams present', () => {
+      const { routerNavigatedAction } = require('@ngrx/router-store')
+      // Mock the schema to always succeed
+      const mockSchema = require('./ai-knowledge-vector-db-search.parameters')
+      jest.spyOn(mockSchema.AIKnowledgeVectorDbSearchCriteriasSchema, 'safeParse').mockReturnValue({
+        success: true,
+        data: { foo: 'bar' }
+      })
+      const preState = { ...initialState, criteria: {}, searchLoadingIndicator: false }
+      const action = routerNavigatedAction({ payload: { routerState: { root: { queryParams: { foo: 'bar' } } } } })
+      const state = AIKnowledgeVectorDbSearchReducer(preState, action)
+      expect(state.criteria).toEqual({ foo: 'bar' })
+      expect(state.searchLoadingIndicator).toBe(true)
+    })
+    
+    it('should not change state when routerNavigatedAction fails schema parse', () => {
+      const { routerNavigatedAction } = require('@ngrx/router-store')
+      // Mock the schema to always fail
+      const mockSchema = require('./ai-knowledge-vector-db-search.parameters')
+      jest.spyOn(mockSchema.AIKnowledgeVectorDbSearchCriteriasSchema, 'safeParse').mockReturnValue({
+        success: false
+      })
+      const preState = { ...initialState, criteria: { foo: 'bar' }, searchLoadingIndicator: true }
+      const action = routerNavigatedAction({ payload: { routerState: { root: { queryParams: { foo: 'bar' } } } } })
+      const state = AIKnowledgeVectorDbSearchReducer(preState, action)
+      expect(state).toBe(preState) // unchanged
+    })
+  })
+
+  describe('AIKnowledgeVectorDbSearch selectors', () => {
+    it('selectResults should map results to RowListGridData[]', () => {
+      const state = {
+        ...initialState,
+        results: [
+          { id: '1', name: 'A', description: 'desc', vdb: 'vdb1', vdbCollection: 'c1' },
+          { id: '2', name: 'B', description: 'desc2', vdb: 'vdb2', vdbCollection: 'c2' }
+        ]
+      }
+      const result = selectors.selectResults.projector(state.results)
+      expect(result).toEqual([
+        { imagePath: '', id: '1', name: 'A', description: 'desc', vdb: 'vdb1', vdbCollection: 'c1' },
+        { imagePath: '', id: '2', name: 'B', description: 'desc2', vdb: 'vdb2', vdbCollection: 'c2' }
+      ])
+    })
+
+    it('selectDisplayedColumns should map displayedColumns ids to columns', () => {
+      const columns = [
+        { id: 'col1', nameKey: 'Col 1', columnType: ColumnType.STRING },
+        { id: 'col2', nameKey: 'Col 2', columnType: ColumnType.STRING }
+      ]
+      const displayedColumns = ['col2', 'col1']
+      const result = selectors.selectDisplayedColumns.projector(columns, displayedColumns)
+      expect(result).toEqual([
+        { id: 'col2', nameKey: 'Col 2', columnType: ColumnType.STRING },
+        { id: 'col1', nameKey: 'Col 1', columnType: ColumnType.STRING }
+      ])
+    })
+
+    it('selectAIKnowledgeVectorDbSearchViewModel should combine all selector results', () => {
+      const columns = [{ id: 'col1', nameKey: 'Col 1', columnType: ColumnType.STRING }]
+      const searchCriteria = {
+        name: 'Test Name',
+        description: 'Test Description',
+        vdb: 'vdb1',
+        vdbCollection: 'collection1',
+        id: 1,
+        limit: 10
+      }
+      const results = [
+        { imagePath: '', id: '1', name: 'A', description: 'desc', vdb: 'vdb1', vdbCollection: 'c1' }
+      ]
+      const displayedColumns = [{ id: 'col1', nameKey: 'Col 1', columnType: ColumnType.STRING }]
+      const viewMode = 'advanced'
+      const chartVisible = true
+    
+      const result = selectors.selectAIKnowledgeVectorDbSearchViewModel.projector(
+        columns,
+        searchCriteria,
+        results,
+        displayedColumns,
+        viewMode,
+        chartVisible
+      )
+      expect(result).toEqual({
+        columns,
+        searchCriteria,
+        results,
+        displayedColumns,
+        viewMode,
+        chartVisible
+      })
+    })
+
+
+    it('selectDisplayedColumns should return [] if displayedColumns is undefined', () => {
+      const columns = [
+        { id: 'col1', nameKey: 'Col 1', columnType: ColumnType.STRING },
+        { id: 'col2', nameKey: 'Col 2', columnType: ColumnType.STRING }
+      ]
+      const displayedColumns = null
+      const result = selectors.selectDisplayedColumns.projector(columns, displayedColumns)
+      expect(result).toEqual([])
+    })
+
+  })
+
 })

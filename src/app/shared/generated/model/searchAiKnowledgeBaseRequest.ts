@@ -9,14 +9,17 @@
  */
 
 
-export interface AIProviderSearchRequest { 
-    limit?: number;
+export interface SearchAIKnowledgeBaseRequest { 
     id?: number;
+    /**
+     * The number of the page
+     */
+    pageNumber?: number;
+    /**
+     * The size of the page.
+     */
+    pageSize?: number;
     name?: string;
     description?: string;
-    llmUrl?: string;
-    appId?: string;
-    modelName?: string;
-    modelVersion?: string;
 }
 

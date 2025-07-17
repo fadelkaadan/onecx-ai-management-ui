@@ -1,11 +1,12 @@
 {
-    "AI_KNOWLEDGE_BASE_DETAILS": {
+  "AI_KNOWLEDGE_BASE_DETAILS": {
     "HELP_ARTICLE_ID": "Hilfeartikel",
     "BREADCRUMB": "Details",
     "HEADER": "AiKnowledgeBase Details",
     "SUB_HEADER": "Anzeigen von AiKnowledgeBase Details",
     "ERROR_MESSAGES": {
-      "DETAILS_LOADING_FAILED": "Details konnten nicht geladen werden."
+      "DETAILS_LOADING_FAILED": "Details konnten nicht geladen werden.",
+      "CONTEXTS_LOADING_FAILED": "Contexts konnten nicht geladen werden."
     },
     "GENERAL": {
       "BACK": "Zurück",

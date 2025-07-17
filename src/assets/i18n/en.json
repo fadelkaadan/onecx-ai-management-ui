@@ -5,7 +5,8 @@
     "HEADER": "AiKnowledgeBase Details",
     "SUB_HEADER": "Display of AiKnowledgeBase Details",
     "ERROR_MESSAGES": {
-      "DETAILS_LOADING_FAILED": "Loading details failed."
+      "DETAILS_LOADING_FAILED": "Loading details failed.",
+      "CONTEXTS_LOADING_FAILED": "Loading contexts failed."
     },
     "GENERAL": {
       "BACK": "Back",
@@ -409,7 +410,10 @@
       "DESCRIPTION": "Description",
       "VDB": "Vdb",
       "VDBCOLLECTION": "VdbCollection",
-      "AICONTEXT": "AI Context"
+      "AICONTEXT": {
+        "NAME":"AI Context",
+        "PLACEHOLDER": "Select an ai context"
+      }
     }
   },
   "AI_KNOWLEDGE_VECTOR_DB_SEARCH": {

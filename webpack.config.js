@@ -2,10 +2,10 @@ const webpack = require('webpack')
 const { ModifyEntryPlugin } = require('@angular-architects/module-federation/src/utils/modify-entry-plugin')
 const { share, withModuleFederationPlugin } = require('@angular-architects/module-federation/webpack')
 const config = withModuleFederationPlugin({
-  name: 'onecx-ai-ui-app',
+  name: 'onecx-ai-management-ui-app',
   filename: 'remoteEntry.js',
   exposes: {
-    './OnecxAiUiModule': './src/bootstrap.ts'
+    './OnecxAiUiManagementModule': './src/bootstrap.ts'
   },
   shared: share({
     '@angular/core': {
@@ -94,7 +94,7 @@ module.exports = {
     ...plugins
   ],
   output: {
-    uniqueName: 'onecx-ai-ui',
+    uniqueName: 'onecx-ai-management-ui',
     publicPath: 'auto'
   },
   experiments: {

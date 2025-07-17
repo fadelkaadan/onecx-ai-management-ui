@@ -30,10 +30,10 @@ export class AIKnowledgeVectorDbCreateUpdateComponent
 
   constructor() {
     this.formGroup = new FormGroup({
-      name: new FormControl(null, [Validators.maxLength(255)]),
-      description: new FormControl(null, [Validators.maxLength(255)]),
-      vdb: new FormControl(null, [Validators.maxLength(255)]),
-      vdbCollection: new FormControl(null, [Validators.maxLength(255)])
+      name: new FormControl('', [Validators.maxLength(255)]),
+      description: new FormControl('', [Validators.maxLength(255)]),
+      vdb: new FormControl('', [Validators.maxLength(255)]),
+      vdbCollection: new FormControl('', [Validators.maxLength(255)])
     })
     this.formGroup.statusChanges
       .pipe(
@@ -61,5 +61,4 @@ export class AIKnowledgeVectorDbCreateUpdateComponent
       })
     }
   }
-  
 }

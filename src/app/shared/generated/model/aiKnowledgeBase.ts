@@ -7,10 +7,11 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { AIContext } from './aIContext';
 
-
-export interface UpdateAIContextResponse { 
-    dataObject?: AIContext;
+export interface AIKnowledgeBase { 
+    modificationCount?: number;
+    id: string;
+    name?: string;
+    description?: string;
 }
 
