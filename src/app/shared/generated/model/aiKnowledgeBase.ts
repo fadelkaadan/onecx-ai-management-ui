@@ -1,5 +1,5 @@
 /**
- * onecx-ai-ui-bff
+ * onecx-ai-management-bff
  *
  * 
  *
@@ -7,7 +7,6 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-
 
 export interface AIKnowledgeBase { 
     modificationCount?: number;

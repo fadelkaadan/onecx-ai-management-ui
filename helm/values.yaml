@@ -1,22 +1,22 @@
 app:
   name: ui
   image:
-    repository: onecx/onecx-ai-ui
+    repository: onecx-apps/onecx-ai-management-ui
   routing:
     enabled: true
-    path: /mfe/onecxAiUi/
+    path: /mfe/onecxAiUiManagement/
   operator:
     microfrontend:
       enabled: true
       specs:
         main:
-          exposedModule: ./OnecxAiUiModule
-          description: OneCX OnecxAiUi Module
-          note: OneCX OnecxAiUi UI module auto import via MF operator
+          exposedModule: ./OnecxAiUiManagementModule
+          description: OneCX OnecxAiUi Management Module
+          note: OneCX OnecxAiUi Management UI module auto import via MF operator
           type: MODULE
           technology: WEBCOMPONENTMODULE
-          remoteName: onecx-ai-ui
-          tagName: onecx-ai-ui-webcomponent
+          remoteName: onecx-ai-management-ui
+          tagName: onecx-ai-management-ui-webcomponent
     permission:
       enabled: true
       spec:
@@ -39,6 +39,7 @@ app:
             EXPORT: Export AIKnowledgeVectorDb
             VIEW: View mode for AIKnowledgeVectorDb
             SEARCH: Search AIKnowledgeVectorDb
+            BACK: Go Back AIKnowledgeVectorDb
           AI_PROVIDER:
             CREATE: Create AIProvider
             EDIT: Edit AIProvider
@@ -54,4 +55,4 @@ app:
         enabled: true
         spec:
           kcConfig:
-            clientId: onecx-ai-ui
+            clientId: onecx-ai-management-ui

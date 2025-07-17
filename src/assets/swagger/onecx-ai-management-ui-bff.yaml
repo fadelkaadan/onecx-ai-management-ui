@@ -1,6 +1,6 @@
 openapi: 3.0.3
 info:
-  title: onecx-ai-ui-bff
+  title: onecx-ai-management-bff
   version: '1.0'
 paths:
   /AIKnowledgeVectorDb/search:

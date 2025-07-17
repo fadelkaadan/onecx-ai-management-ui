@@ -7,7 +7,7 @@ import { LetDirective } from '@ngrx/component'
 import { EffectsModule } from '@ngrx/effects'
 import { StoreRouterConnectingModule } from '@ngrx/router-store'
 import { StoreModule } from '@ngrx/store'
-import { StoreDevtoolsModule } from '@ngrx/store-devtools'
+import { provideStoreDevtools, StoreDevtoolsModule } from '@ngrx/store-devtools'
 import { TranslateLoader, TranslateModule, TranslateService } from '@ngx-translate/core'
 import { KeycloakAuthModule } from '@onecx/keycloak-auth'
 import {
@@ -41,6 +41,7 @@ export const commonImports = [CommonModule]
     LetDirective,
     StoreRouterConnectingModule.forRoot(),
     StoreModule.forRoot(reducers, { metaReducers }),
+
     StoreDevtoolsModule.instrument({
       maxAge: 25,
       logOnly: !isDevMode(),
@@ -49,7 +50,7 @@ export const commonImports = [CommonModule]
       traceLimit: 75
     }),
     EffectsModule.forRoot([]),
-    PortalCoreModule.forRoot('onecx-ai-ui-app'),
+    PortalCoreModule.forRoot('onecx-ai-management-ui-app'),
     TranslateModule.forRoot({
       extend: true,
       loader: {
@@ -73,7 +74,16 @@ export const commonImports = [CommonModule]
       useFactory: translateServiceInitializer,
       multi: true,
       deps: [UserService, TranslateService]
-    }
+    },
+
+    provideStoreDevtools({
+      maxAge: 25, // Retains last 25 states
+      logOnly: !isDevMode(), // Restrict extension to log-only mode
+      autoPause: true, // Pauses recording actions and state changes when the extension window is not open
+      trace: false, //  If set to true, will include stack trace for every dispatched action, so you can see it in trace tab jumping directly to that part of code
+      traceLimit: 75, // maximum stack trace frames to be stored (in case trace option was provided as true)
+      connectInZone: true // If set to true, the connection is established within the Angular zone
+    })
   ],
   bootstrap: [AppComponent]
 })

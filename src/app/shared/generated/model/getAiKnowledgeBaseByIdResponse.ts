@@ -1,5 +1,5 @@
 /**
- * onecx-ai-ui-bff
+ * onecx-ai-management-bff
  *
  * 
  *
@@ -7,7 +7,8 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { AIKnowledgeBase } from './AIKnowledgeBase';
+
+import { AIKnowledgeBase } from "./aIKnowledgeBase";
 
 
 export interface GetAIKnowledgeBaseByIdResponse { 
