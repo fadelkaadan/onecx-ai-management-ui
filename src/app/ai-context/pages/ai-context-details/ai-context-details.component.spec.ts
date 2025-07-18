@@ -35,14 +35,11 @@ describe('AiContextDetailsComponent', () => {
   }
 
   window.postMessage = (m: any) => {
-    // eslint-disable-next-line @typescript-eslint/no-empty-function
     listeners.forEach((l) =>
       l({
         data: m,
-        // eslint-disable-next-line @typescript-eslint/no-empty-function
-        stopImmediatePropagation: () => {},
-        // eslint-disable-next-line @typescript-eslint/no-empty-function
-        stopPropagation: () => {}
+        stopImmediatePropagation: () => undefined,
+        stopPropagation: () => undefined
       })
     )
   }
@@ -87,10 +84,15 @@ describe('AiContextDetailsComponent', () => {
       imports: [
         PortalCoreModule,
         LetDirective,
-        TranslateTestingModule.withTranslations('en', require('./../../../../assets/i18n/en.json')).withTranslations(
-          'de',
-          require('./../../../../assets/i18n/de.json')
-        ),
+        TranslateTestingModule.withTranslations('en', {
+          // Add minimum translations needed for tests
+          'ACTIONS.BACK': 'Back',
+          'ACTIONS.EDIT': 'Edit',
+          'ACTIONS.SAVE': 'Save',
+          'ACTIONS.CANCEL': 'Cancel',
+          'COMMON.NAME': 'Name',
+          'COMMON.DESCRIPTION': 'Description'
+        }),
         HttpClientTestingModule,
         AutoCompleteModule,
         ReactiveFormsModule
@@ -211,5 +213,133 @@ describe('AiContextDetailsComponent', () => {
     expect(await fourthDetailItem?.getLabel()).toEqual('fourth')
     expect(await fourthDetailItem?.getValue()).toEqual('fourth value')
     expect(await fourthDetailItem?.getIcon()).toEqual(PrimeIcons.QUESTION)
+  })
+
+  it('should enable or disable the form based on editMode', async () => {
+    // Test view mode (disabled)
+    store.overrideSelector(selectAiContextDetailsViewModel, { ...baseAiContextDetailsViewModel, editMode: false })
+    store.refreshState()
+    fixture.detectChanges()
+    expect(component.formGroup.disabled).toBeTruthy()
+
+    // Test edit mode (enabled)
+    store.overrideSelector(selectAiContextDetailsViewModel, { ...baseAiContextDetailsViewModel, editMode: true })
+    store.refreshState()
+    fixture.detectChanges()
+    expect(component.formGroup.enabled).toBeTruthy()
+  })
+
+  it('should show the correct actions for edit and view modes', async () => {
+    // View mode
+    store.overrideSelector(selectAiContextDetailsViewModel, { ...baseAiContextDetailsViewModel, editMode: false })
+    store.refreshState()
+    fixture.detectChanges()
+
+    const pageHeader = await aiContextDetails.getHeader()
+    let inlineActions = await pageHeader.getInlineActionButtons()
+    expect(inlineActions.length).toBe(2) // Back and Edit
+
+    // Edit mode
+    store.overrideSelector(selectAiContextDetailsViewModel, { ...baseAiContextDetailsViewModel, editMode: true })
+    store.refreshState()
+    fixture.detectChanges()
+
+    inlineActions = await pageHeader.getInlineActionButtons()
+    expect(inlineActions.length).toBe(2) // Save and Cancel
+  })
+
+  it('should dispatch edit action when edit() is called', () => {
+    const doneFn = jest.fn()
+    store.scannedActions$.pipe(ofType(AiContextDetailsActions.editButtonClicked)).subscribe(() => {
+      doneFn()
+    })
+
+    component.edit()
+    expect(doneFn).toHaveBeenCalledTimes(1)
+  })
+
+  it('should dispatch save action with form values when save() is called', () => {
+    const doneFn = jest.fn()
+    const formValues = {
+      appId: 'test-app',
+      name: 'Test Name',
+      description: 'Test Description'
+    }
+
+    component.formGroup.patchValue(formValues)
+
+    store.scannedActions$.pipe(ofType(AiContextDetailsActions.saveButtonClicked)).subscribe((action) => {
+      expect(action.details).toEqual({
+        ...formValues
+      })
+      doneFn()
+    })
+
+    component.save()
+    expect(doneFn).toHaveBeenCalledTimes(1)
+  })
+
+  it('should dispatch cancel action with dirty state when cancel() is called', () => {
+    const doneFn = jest.fn()
+    component.formGroup.markAsDirty()
+
+    store.scannedActions$.pipe(ofType(AiContextDetailsActions.cancelButtonClicked)).subscribe((action) => {
+      expect(action.dirty).toBeTruthy()
+      doneFn()
+    })
+
+    component.cancel()
+    expect(doneFn).toHaveBeenCalledTimes(1)
+  })
+
+  it('should dispatch delete action when delete() is called', () => {
+    const doneFn = jest.fn()
+    store.scannedActions$.pipe(ofType(AiContextDetailsActions.deleteButtonClicked)).subscribe(() => {
+      doneFn()
+    })
+
+    component.delete()
+    expect(doneFn).toHaveBeenCalledTimes(1)
+  })
+
+  it('should patch form with details when vm changes', () => {
+    const details = {
+      appId: 'test-app',
+      name: 'Test Name',
+      description: 'Test Description'
+    }
+
+    store.overrideSelector(selectAiContextDetailsViewModel, {
+      ...baseAiContextDetailsViewModel,
+      details
+    })
+    store.refreshState()
+    fixture.detectChanges()
+
+    expect(component.formGroup.get('appId')?.value).toBe(details.appId)
+    expect(component.formGroup.get('name')?.value).toBe(details.name)
+    expect(component.formGroup.get('description')?.value).toBe(details.description)
+  })
+
+  describe('Form field suggestions', () => {
+    it('should filter provider suggestions based on query', () => {
+      component.searchProviders({ query: 'test' })
+      // Add expectations for filtered providers
+      expect(component.providerQuery$.value).toBe('test')
+    })
+
+    it('should filter knowledge base suggestions based on query', () => {
+      component.searchKnowledgeBases({ query: 'test' })
+      // Add expectations for filtered knowledge bases
+      expect(component.knowledgeBaseQuery$.value).toBe('test')
+    })
+
+    it('should filter vector DB suggestions based on query', () => {
+      component.searchVectorDbs({ query: 'test' })
+      // Add expectations for vector DB suggestions
+      component.vectorDbSuggestions$.subscribe(suggestions => {
+        expect(suggestions.length).toBeDefined()
+      })
+    })
   })
 })

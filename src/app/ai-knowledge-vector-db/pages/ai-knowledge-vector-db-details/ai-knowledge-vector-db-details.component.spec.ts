@@ -104,22 +104,26 @@ describe('AIKnowledgeVectorDbDetailsComponent', () => {
         modificationCount: -2147483648,
         modificationUser: 'string',
         creationUser: 'string',
-        AIKnowledgeBase: {
-          modificationCount: -2147483648,
-          id: 'string',
-          name: 'string',
-          description: 'string',
-          aiContext: []
-        },
-        aIKnowledgeVectorDb: {
-          modificationCount: -2147483648,
-          id: 'string',
-          name: 'string',
-          description: 'string',
-          vdb: 'string',
-          vdbCollection: 'string',
-          aiContext: {}
-        },
+        AIKnowledgeBase: [
+          {
+            modificationCount: -2147483648,
+            id: 'string',
+            name: 'string',
+            description: 'string',
+            aiContext: []
+          }
+        ],
+        aIKnowledgeVectorDb: [
+          {
+            modificationCount: -2147483648,
+            id: 'string',
+            name: 'string',
+            description: 'string',
+            vdb: 'string',
+            vdbCollection: 'string',
+            aiContext: {}
+          }
+        ],
         aIKnowledgeUrl: [
           {
             modificationCount: -2147483648,
@@ -153,17 +157,19 @@ describe('AIKnowledgeVectorDbDetailsComponent', () => {
             status: AIKnowledgeDocumentStatusEnum.New
           }
         ],
-        provider: {
-          modificationCount: -2147483648,
-          id: 'string',
-          name: 'string',
-          description: 'string',
-          llmUrl: 'string',
-          appId: 'string',
-          modelName: 'string',
-          modelVersion: 'string',
-          apiKey: 'string'
-        }
+        provider: [
+          {
+            modificationCount: -2147483648,
+            id: 'string',
+            name: 'string',
+            description: 'string',
+            llmUrl: 'string',
+            appId: 'string',
+            modelName: 'string',
+            modelVersion: 'string',
+            apiKey: 'string'
+          }
+        ]
       }
     },
     contexts: [],
