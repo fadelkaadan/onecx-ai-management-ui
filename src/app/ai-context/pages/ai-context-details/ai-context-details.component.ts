@@ -128,58 +128,53 @@ export class AiContextDetailsComponent implements OnInit {
   ) {
     this.providersSuggestions$ = this.viewModel$.pipe(
       map(({ details, aiProviders }) => {
-        const selectedProviders = Array.isArray(details?.provider) ? details.provider : []
-        const allProviders = aiProviders?.filter((ctx) => !selectedProviders.some((c) => c.id === ctx.id))
-        if (!allProviders || allProviders.length === 0) {
-          return selectedProviders
-        }
-        return [...selectedProviders, ...allProviders]
+        return aiProviders?.filter((p) => !details?.provider || p.id !== details.provider.id) || []
       })
     )
     this.providerQuery$ = new BehaviorSubject<string>('')
-    this.filteredProviders$ = combineLatest([this.providersSuggestions$, this.providerQuery$]).pipe(
-      map(([providers, query]) =>
-        providers.filter((p) => (p.name + ' ' + p.appId).toLowerCase().includes(query.toLowerCase()))
-      )
+    this.filteredProviders$ = combineLatest([this.providersSuggestions$, this.providerQuery$, this.viewModel$]).pipe(
+      map(([providers, query, vm]) => {
+        const suggestions = [...(vm.details?.provider ? [vm.details.provider] : []), ...providers]
+        return suggestions.filter((p) => (p.name + ' ' + (p.appId || '')).toLowerCase().includes(query.toLowerCase()))
+      })
     )
 
     this.knowledgeBaseSuggestions$ = this.viewModel$.pipe(
       map(({ details, aiKnowledgeBases }) => {
-        const selectedKnowledgeBases = Array.isArray(details?.AIKnowledgeBase) ? details.AIKnowledgeBase : []
-        const allKnowledgeBases = aiKnowledgeBases?.filter(
-          (ctx) => !selectedKnowledgeBases.some((c) => c.id === ctx.id)
-        )
-        if (!allKnowledgeBases || allKnowledgeBases.length === 0) {
-          return selectedKnowledgeBases
-        }
-        return [...selectedKnowledgeBases, ...allKnowledgeBases]
+        return aiKnowledgeBases?.filter((kb) => !details?.AIKnowledgeBase || kb.id !== details.AIKnowledgeBase.id) || []
       })
     )
     this.knowledgeBaseQuery$ = new BehaviorSubject<string>('')
-    this.filteredKnowledgeBases$ = combineLatest([this.knowledgeBaseSuggestions$, this.knowledgeBaseQuery$]).pipe(
-      map(([knowledgeBases, query]) =>
-        knowledgeBases.filter((kb) => (kb.name + ' ' + kb.appId).toLowerCase().includes(query.toLowerCase()))
-      )
+    this.filteredKnowledgeBases$ = combineLatest([
+      this.knowledgeBaseSuggestions$,
+      this.knowledgeBaseQuery$,
+      this.viewModel$
+    ]).pipe(
+      map(([knowledgeBases, query, vm]) => {
+        const suggestions = [...(vm.details?.AIKnowledgeBase ? [vm.details.AIKnowledgeBase] : []), ...knowledgeBases]
+        return suggestions.filter((kb) =>
+          (kb.name + ' ' + (kb.appId || '')).toLowerCase().includes(query.toLowerCase())
+        )
+      })
     )
 
     this.vectorDbSuggestions$ = this.viewModel$.pipe(
-      map(({ details, knowledgeVectorDbs }) => {
-        const selectedVectorDbs = Array.isArray(details?.aIKnowledgeVectorDb) ? details.aIKnowledgeVectorDb : []
-        // There is no allVectorDbs property in the view model, so fallback to []
-        const allVectorDbs = knowledgeVectorDbs?.filter((ctx) => !selectedVectorDbs.some((c) => c.id === ctx.id))
-        if (!allVectorDbs || allVectorDbs.length === 0) {
-          return selectedVectorDbs
-        }
-        return [...selectedVectorDbs, ...allVectorDbs]
+      map(({ details, aiKnowledgeVectorDbs }) => {
+        return (
+          aiKnowledgeVectorDbs?.filter(
+            (vdb) => !details?.aIKnowledgeVectorDb || vdb.id !== details.aIKnowledgeVectorDb.id
+          ) || []
+        )
       })
     )
     this.vectorDbQuery$ = new BehaviorSubject<string>('')
-    this.filteredVectorDbs$ = combineLatest([this.vectorDbSuggestions$, this.vectorDbQuery$]).pipe(
-      map(([vectorDbs, query]) =>
-        vectorDbs.filter((vdb) =>
+    this.filteredVectorDbs$ = combineLatest([this.vectorDbSuggestions$, this.vectorDbQuery$, this.viewModel$]).pipe(
+      map(([vectorDbs, query, vm]) => {
+        const suggestions = [...(vm.details?.aIKnowledgeVectorDb ? [vm.details.aIKnowledgeVectorDb] : []), ...vectorDbs]
+        return suggestions.filter((vdb) =>
           (vdb.name + ' ' + (vdb.description || '')).toLowerCase().includes(query.toLowerCase())
         )
-      )
+      })
     )
 
     this.formGroup = new FormGroup({
@@ -202,9 +197,9 @@ export class AiContextDetailsComponent implements OnInit {
           appId: vm.details?.appId,
           name: vm.details?.name,
           description: vm.details?.description,
-          AIKnowledgeBase: vm.details?.AIKnowledgeBase ? vm.details?.AIKnowledgeBase[0] : null,
-          provider: vm.details?.provider ? vm.details?.provider[0] : null,
-          aIKnowledgeVectorDb: vm.details?.aIKnowledgeVectorDb ? vm.details?.aIKnowledgeVectorDb[0] : null,
+          AIKnowledgeBase: vm.details?.AIKnowledgeBase,
+          provider: vm.details?.provider,
+          aIKnowledgeVectorDb: vm.details?.aIKnowledgeVectorDb,
           aIKnowledgeUrl: vm.details?.aIKnowledgeUrl || [],
           aIKnowledgeDbs: vm.details?.aIKnowledgeDbs || [],
           aIKnowledgeDocuments: vm.details?.aIKnowledgeDocuments || []
@@ -254,10 +249,7 @@ export class AiContextDetailsComponent implements OnInit {
     const formValue = this.formGroup.value
 
     const payload = {
-      ...formValue,
-      AIKnowledgeBase: formValue.AIKnowledgeBase ? [formValue.AIKnowledgeBase] : [],
-      provider: formValue.provider ? [formValue.provider] : [],
-      aIKnowledgeVectorDb: formValue.aIKnowledgeVectorDb ? [formValue.aIKnowledgeVectorDb] : []
+      ...formValue
     }
 
     this.store.dispatch(
