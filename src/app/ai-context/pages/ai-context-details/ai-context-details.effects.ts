@@ -73,11 +73,11 @@ export class AiContextDetailsEffects {
     )
   })
 
-  loadAIKnowledgeBaseById$ = createEffect(() => {
+  loadAIKnowledgeBases$ = createEffect(() => {
     return this.actions$.pipe(
       ofType(AiContextDetailsActions.navigatedToDetailsPage),
       switchMap(() => {
-        const fetchAllReq: SearchAIKnowledgeBaseRequest = { id: undefined, name: '', description: '' }
+        const fetchAllReq: SearchAIKnowledgeBaseRequest = { name: '', description: '' }
         return this.aiKnowledgeBaseService.searchAIKnowledgeBases(fetchAllReq).pipe(
           map(({ stream }) =>
             AiContextDetailsActions.aiContextAiKnowledgeBasesReceived({
@@ -96,7 +96,7 @@ export class AiContextDetailsEffects {
     )
   })
 
-  loadProviderById$ = createEffect(() => {
+  loadProviders$ = createEffect(() => {
     return this.actions$.pipe(
       ofType(AiContextDetailsActions.navigatedToDetailsPage),
       switchMap(() => {
@@ -119,20 +119,20 @@ export class AiContextDetailsEffects {
     )
   })
 
-  loadVectorDbById$ = createEffect(() => {
+  loadVectorDbs$ = createEffect(() => {
     return this.actions$.pipe(
       ofType(AiContextDetailsActions.navigatedToDetailsPage),
       switchMap(() => {
         const fetchAllReq: SearchAIKnowledgeVectorDbRequest = { id: undefined, name: '', description: '' }
         return this.aiKnowledgeVectorDB.searchAIKnowledgeVectorDbs(fetchAllReq).pipe(
           map(({ results }) =>
-            AiContextDetailsActions.aiContextKnowledgeVectorDbsReceived({
+            AiContextDetailsActions.aiContextAiKnowledgeVectorDbsReceived({
               knowledgeVectorDbs: results
             })
           ),
           catchError((error) =>
             of(
-              AiContextDetailsActions.aiContextKnowledgeVectorDbsLoadingFailed({
+              AiContextDetailsActions.aiContextAiKnowledgeVectorDbsLoadingFailed({
                 error
               })
             )
@@ -287,6 +287,18 @@ export class AiContextDetailsEffects {
     {
       action: AiContextDetailsActions.aiContextDetailsLoadingFailed,
       key: 'AI_CONTEXT_DETAILS.ERROR_MESSAGES.DETAILS_LOADING_FAILED'
+    },
+    {
+      action: AiContextDetailsActions.aiContextAiKnowledgeBasesLoadingFailed,
+      key: 'AI_KNOWLEDGE_BASE_SEARCH.ERROR_MESSAGES.SEARCH_RESULTS_LOADING_FAILED'
+    },
+    {
+      action: AiContextDetailsActions.aiContextAiKnowledgeVectorDbsLoadingFailed,
+      key: 'AI_KNOWLEDGE_VECTOR_DB_SEARCH.ERROR_MESSAGES.SEARCH_RESULTS_LOADING_FAILED'
+    },
+    {
+      action: AiContextDetailsActions.aiContextProvidersLoadingFailed,
+      key: 'AI_PROVIDER_SEARCH.ERROR_MESSAGES.SEARCH_RESULTS_LOADING_FAILED'
     }
   ]
 

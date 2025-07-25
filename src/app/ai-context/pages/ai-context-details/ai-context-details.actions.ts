@@ -31,13 +31,13 @@ export const AiContextDetailsActions = createActionGroup({
     }>(),
     'ai context aiKnowledgeBases loading failed': props<{ error: string | null }>(),
 
-    'ai context knowledgeVectorDbs received': props<{
+    'ai context aiKnowledgeVectorDbs received': props<{
       knowledgeVectorDbs: AIKnowledgeVectorDb[]
     }>(),
-    'ai context reloaded knowledgeVectorDbs received': props<{
+    'ai context reloaded aiKnowledgeVectorDbs received': props<{
       knowledgeVectorDbs: AIKnowledgeVectorDb[]
     }>(),
-    'ai context knowledgeVectorDbs loading failed': props<{ error: string | null }>(),
+    'ai context aiKnowledgeVectorDbs loading failed': props<{ error: string | null }>(),
 
     'edit mode set': props<{ editMode: boolean }>(),
     'Update ai context cancelled': emptyProps(),

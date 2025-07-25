@@ -6,15 +6,15 @@ export const initialState: AiContextDetailsState = {
   details: undefined,
   detailsLoadingIndicator: true,
   detailsLoaded: false,
-  providers: [],
-  providersLoadingIndicator: true,
-  providersLoaded: false,
+  aiProviders: [],
+  aiProvidersLoadingIndicator: true,
+  aiProvidersLoaded: false,
   aiKnowledgeBases: [],
   aiKnowledgeBasesLoadingIndicator: true,
   aiKnowledgeBasesLoaded: false,
-  knowledgeVectorDbs: [],
-  knowledgeVectorDbsLoadingIndicator: true,
-  knowledgeVectorDbsLoaded: false,
+  aiKnowledgeVectorDbs: [],
+  aiKnowledgeVectorDbsLoadingIndicator: true,
+  aiKnowledgeVectorDbsLoaded: false,
   backNavigationPossible: true,
   editMode: false,
   isSubmitting: false
@@ -44,18 +44,18 @@ export const aiContextDetailsReducer = createReducer(
     AiContextDetailsActions.aiContextProvidersReceived,
     (state: AiContextDetailsState, { providers }): AiContextDetailsState => ({
       ...state,
-      providers,
-      providersLoadingIndicator: false,
-      providersLoaded: true
+      aiProviders: providers,
+      aiProvidersLoadingIndicator: false,
+      aiProvidersLoaded: true
     })
   ),
   on(
     AiContextDetailsActions.aiContextProvidersLoadingFailed,
     (state: AiContextDetailsState): AiContextDetailsState => ({
       ...state,
-      providers: [],
-      providersLoadingIndicator: false,
-      providersLoaded: false
+      aiProviders: [],
+      aiProvidersLoadingIndicator: false,
+      aiProvidersLoaded: false
     })
   ),
   on(
@@ -65,6 +65,15 @@ export const aiContextDetailsReducer = createReducer(
       aiKnowledgeBases,
       aiKnowledgeBasesLoadingIndicator: false,
       aiKnowledgeBasesLoaded: true
+    })
+  ),
+  on(
+    AiContextDetailsActions.aiContextAiKnowledgeBasesLoadingFailed,
+    (state: AiContextDetailsState): AiContextDetailsState => ({
+      ...state,
+      aiKnowledgeBases: [],
+      aiKnowledgeBasesLoadingIndicator: false,
+      aiKnowledgeBasesLoaded: false
     })
   ),
   on(

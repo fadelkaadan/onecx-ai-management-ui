@@ -5,17 +5,17 @@ export interface AiContextDetailsState {
   detailsLoadingIndicator: boolean
   detailsLoaded: boolean
 
-  providers: AIProvider[] | undefined
-  providersLoaded: boolean
-  providersLoadingIndicator: boolean
+  aiProviders: AIProvider[] | undefined
+  aiProvidersLoaded: boolean
+  aiProvidersLoadingIndicator: boolean
 
   aiKnowledgeBases: AIKnowledgeBase[] | undefined
   aiKnowledgeBasesLoaded: boolean
   aiKnowledgeBasesLoadingIndicator: boolean
 
-  knowledgeVectorDbs: AIKnowledgeVectorDb[] | undefined
-  knowledgeVectorDbsLoaded: boolean
-  knowledgeVectorDbsLoadingIndicator: boolean
+  aiKnowledgeVectorDbs: AIKnowledgeVectorDb[] | undefined
+  aiKnowledgeVectorDbsLoaded: boolean
+  aiKnowledgeVectorDbsLoadingIndicator: boolean
 
   backNavigationPossible: boolean
   editMode: boolean

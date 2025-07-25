@@ -13,9 +13,9 @@ export interface AiContextDetailsViewModel {
   aiKnowledgeBasesLoaded: boolean
   aiKnowledgeBasesLoadingIndicator: boolean
 
-  knowledgeVectorDbs: AIKnowledgeVectorDb[] | undefined
-  knowledgeVectorDbsLoaded: boolean
-  knowledgeVectorDbsLoadingIndicator: boolean
+  aiKnowledgeVectorDbs: AIKnowledgeVectorDb[] | undefined
+  aiKnowledgeVectorDbsLoaded: boolean
+  aiKnowledgeVectorDbsLoadingIndicator: boolean
 
   backNavigationPossible: boolean
   editMode: boolean
