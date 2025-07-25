@@ -1268,16 +1268,10 @@ components:
         creationUser:
           type: string
         provider:
-          type: array
-          items:
             $ref: '#/components/schemas/AIProvider'
         AIKnowledgeBase:
-          type: array
-          items:
             $ref: '#/components/schemas/AIKnowledgeBase'
         aIKnowledgeVectorDb:
-          type: array
-          items:
             $ref: '#/components/schemas/AIKnowledgeVectorDb'
         aIKnowledgeUrl:
           type: array

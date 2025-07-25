@@ -23,9 +23,9 @@ export interface AIContext {
     modificationCount?: number;
     modificationUser?: string;
     creationUser?: string;
-    provider?: Array<AIProvider>;
-    AIKnowledgeBase?: Array<AIKnowledgeBase>;
-    aIKnowledgeVectorDb?: Array<AIKnowledgeVectorDb>;
+    provider?: AIProvider;
+    AIKnowledgeBase?: AIKnowledgeBase;
+    aIKnowledgeVectorDb?: AIKnowledgeVectorDb;
     aIKnowledgeUrl?: Array<AIKnowledgeUrl>;
     aIKnowledgeDbs?: Array<AIKnowledgeDatabase>;
     aIKnowledgeDocuments?: Array<AIKnowledgeDocument>;
