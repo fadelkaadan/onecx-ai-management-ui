@@ -16,7 +16,7 @@ import {
 import { TranslateTestingModule } from 'ngx-translate-testing'
 import { AiContextDetailsComponent } from './ai-context-details.component'
 import { AiContextDetailsHarness } from './ai-context-details.harness'
-import { initialState } from './ai-context-details.reducers'
+import { aiContextDetailsReducer, initialState } from './ai-context-details.reducers'
 import { aiContextDetailsSelectors, selectAiContextDetailsViewModel } from './ai-context-details.selectors'
 import { AiContextDetailsViewModel } from './ai-context-details.viewmodel'
 import { FormsModule, ReactiveFormsModule } from '@angular/forms'
@@ -28,7 +28,9 @@ import {
   GetAIContextByIdResponse,
   AiKnowledgeBaseBffService,
   // GetAIKnowledgeBaseByIdResponse,
-  SearchAIKnowledgeBaseResponse
+  SearchAIKnowledgeBaseResponse,
+  AIProviderBffService,
+  AIKnowledgeVectorDbBffService
 } from 'src/app/shared/generated'
 import { ofType } from '@ngrx/effects'
 import { AiContextDetailsActions } from './ai-context-details.actions'
@@ -42,6 +44,8 @@ import { routerNavigatedAction } from '@ngrx/router-store'
 import { AutoCompleteModule } from 'primeng/autocomplete'
 import { MultiSelectModule } from 'primeng/multiselect'
 import { InputTextModule } from 'primeng/inputtext'
+import { PrimeIcons } from 'primeng/api'
+import { AiContextDetailsState } from './ai-context-details.state'
 
 describe('AiContextDetailsComponent', () => {
   const origAddEventListener = window.addEventListener
@@ -85,77 +89,79 @@ describe('AiContextDetailsComponent', () => {
   let effects: AiContextDetailsEffects
   let actions$: ReplaySubject<any>
   let aiContextService: jest.Mocked<AIContextBffService>
+  let aiProviderService: jest.Mocked<AIProviderBffService>
   let aiKnowledgeBaseService: jest.Mocked<AiKnowledgeBaseBffService>
+  let aiKnowledgeVectorDbs: jest.Mocked<AIKnowledgeVectorDbBffService>
   let portalDialogService: jest.Mocked<PortalDialogService>
   let messageService: jest.Mocked<PortalMessageService>
   let router: jest.Mocked<Router>
 
   const baseAiContextDetailsViewModel: AiContextDetailsViewModel = {
     details: {
-      id: 'string',
-      appId: 'string',
-      name: 'string',
-      description: 'string',
-      modificationCount: -2147483648,
-      modificationUser: 'string',
-      creationUser: 'string',
+      id: 'id-1',
+      appId: 'appid-1',
+      name: 'details name',
+      description: 'details description',
+      modificationCount: 1,
+      modificationUser: 'user-1',
+      creationUser: 'user-1',
       AIKnowledgeBase: {
-        modificationCount: -2147483648,
-        id: 'string',
-        name: 'string',
-        description: 'string',
+        modificationCount: 1,
+        id: 'id-1',
+        name: 'name-1',
+        description: 'description-1',
         aiContext: []
       },
       provider: {
-        modificationCount: -2147483648,
-        id: 'string',
-        name: 'string',
-        description: 'string',
-        llmUrl: 'string',
-        appId: 'string',
-        modelName: 'string',
-        modelVersion: 'string',
-        apiKey: 'string'
+        modificationCount: 1,
+        id: 'id-1',
+        name: 'name-1',
+        description: 'description-1',
+        llmUrl: 'llmUrl-1',
+        appId: 'appId-1',
+        modelName: 'modelName-1',
+        modelVersion: 'modelVersion-1',
+        apiKey: 'apiKey-1'
       },
       aIKnowledgeVectorDb: {
-        modificationCount: -2147483648,
-        id: 'string',
-        name: 'string',
-        description: 'string',
-        vdb: 'string',
-        vdbCollection: 'string',
+        modificationCount: 1,
+        id: 'id-1',
+        name: 'aIKnowledgeVectorDb name',
+        description: 'aIKnowledgeVectorDb description',
+        vdb: 'vdb-1',
+        vdbCollection: 'vdbCollection-1',
         aiContext: {}
       },
       aIKnowledgeUrl: [
         {
-          modificationCount: -2147483648,
-          modificationUser: 'string',
-          creationUser: 'string',
-          id: 'string',
-          url: 'string',
-          name: 'string',
-          description: 'string'
+          modificationCount: 1,
+          modificationUser: 'user-1',
+          creationUser: 'user-1',
+          id: 'id-1',
+          url: 'url-1',
+          name: 'aIKnowledgeUrl name',
+          description: 'aIKnowledgeUrl description'
         }
       ],
       aIKnowledgeDbs: [
         {
-          modificationCount: -2147483648,
-          modificationUser: 'string',
-          id: 'string',
-          name: 'string',
-          description: 'string',
-          db: 'string',
-          user: 'string',
+          modificationCount: 1,
+          modificationUser: 'user-1',
+          id: 'id-1',
+          name: 'aIKnowledgeDb name',
+          description: 'aIKnowledgeDb description',
+          db: 'db-1',
+          user: 'user-1',
           pwd: 'string',
           tables: ['string']
         }
       ],
       aIKnowledgeDocuments: [
         {
-          modificationCount: -2147483648,
-          id: 'string',
-          name: 'string',
-          documentRefId: 'string',
+          modificationCount: 1,
+          id: 'id-1',
+          name: 'aIKnowledgeDocument name',
+          documentRefId: 'refId-1',
           status: AIKnowledgeDocumentStatusEnum.New
         }
       ]
@@ -164,42 +170,42 @@ describe('AiContextDetailsComponent', () => {
     detailsLoadingIndicator: false,
     aiProviders: [
       {
-        modificationCount: -2147483648,
-        id: 'string',
-        name: 'string',
-        description: 'string',
-        llmUrl: 'string',
-        appId: 'string',
-        modelName: 'string',
-        modelVersion: 'string',
-        apiKey: 'string'
+        modificationCount: 1,
+        id: 'id-1',
+        name: 'aIProvider name',
+        description: 'aIProvider description',
+        llmUrl: 'aIProvider llmUrl',
+        appId: 'aIProvider appId',
+        modelName: 'aIProvider modelName',
+        modelVersion: 'aIProvider modelVersion',
+        apiKey: 'aIProvider apiKey'
       }
     ],
-    aiProvidersLoaded: false,
+    aiProvidersLoaded: true,
     aiProvidersLoadingIndicator: false,
     aiKnowledgeBases: [
       {
-        modificationCount: -2147483648,
-        id: 'string',
-        name: 'string',
-        description: 'string',
+        modificationCount: 1,
+        id: 'id-1',
+        name: 'aIKnowledgeBase name',
+        description: 'aIKnowledgeBase description',
         aiContext: []
       }
     ],
-    aiKnowledgeBasesLoaded: false,
+    aiKnowledgeBasesLoaded: true,
     aiKnowledgeBasesLoadingIndicator: false,
     aiKnowledgeVectorDbs: [
       {
-        modificationCount: -2147483648,
-        id: 'string',
-        name: 'string',
-        description: 'string',
-        vdb: 'string',
-        vdbCollection: 'string',
+        modificationCount: 1,
+        id: 'id-1',
+        name: 'aIKnowledgeVectorDb name',
+        description: 'aIKnowledgeVectorDb description',
+        vdb: 'vdb-1',
+        vdbCollection: 'vdbCollection-1',
         aiContext: {}
       }
     ],
-    aiKnowledgeVectorDbsLoaded: false,
+    aiKnowledgeVectorDbsLoaded: true,
     aiKnowledgeVectorDbsLoadingIndicator: false,
     backNavigationPossible: true,
     editMode: false,
@@ -215,9 +221,17 @@ describe('AiContextDetailsComponent', () => {
       searchAIContexts: jest.fn()
     } as unknown as jest.Mocked<AIContextBffService>
 
+    aiProviderService = {
+      searchAIProviders: jest.fn()
+    } as unknown as jest.Mocked<AIProviderBffService>
+
     aiKnowledgeBaseService = {
       searchAIKnowledgeBases: jest.fn()
     } as unknown as jest.Mocked<AiKnowledgeBaseBffService>
+
+    aiKnowledgeVectorDbs = {
+      searchAIKnowledgeVectorDbs: jest.fn()
+    } as unknown as jest.Mocked<AIKnowledgeVectorDbBffService>
 
     portalDialogService = {
       openDialog: jest.fn()
@@ -306,7 +320,9 @@ describe('AiContextDetailsComponent', () => {
         BreadcrumbService,
         { provide: ActivatedRoute, useValue: mockActivatedRoute },
         { provide: AIContextBffService, useValue: aiContextService },
+        { provide: AIProviderBffService, useValue: aiProviderService },
         { provide: AiKnowledgeBaseBffService, useValue: aiKnowledgeBaseService },
+        { provide: AIKnowledgeVectorDbBffService, useValue: aiKnowledgeVectorDbs },
         { provide: Router, useValue: router },
         { provide: PortalMessageService, useValue: messageService },
         { provide: PortalDialogService, useValue: portalDialogService }
@@ -834,500 +850,685 @@ describe('AiContextDetailsComponent', () => {
       expect(doneFn).toHaveBeenCalledTimes(1)
     })
 
-    // it('should display item details in form fields', async () => {
-    //   store.overrideSelector(selectAiContextDetailsViewModel, baseAiContextDetailsViewModel)
-    //   store.refreshState()
+    it('should display item details in form fields', async () => {
+      store.overrideSelector(selectAiContextDetailsViewModel, baseAiContextDetailsViewModel)
+      store.refreshState()
 
-    //   fixture.detectChanges()
-    //   await fixture.whenStable()
+      fixture.detectChanges()
+      await fixture.whenStable()
 
-    //   if (!component.formGroup) {
-    //     component.ngOnInit()
-    //     fixture.detectChanges()
-    //     await fixture.whenStable()
-    //   }
+      if (!component.formGroup) {
+        component.ngOnInit()
+        fixture.detectChanges()
+        await fixture.whenStable()
+      }
 
-    //   const pageDetails = component.formGroup.value
-    //   expect(pageDetails).toEqual({
-    //     ...baseAiContextDetailsViewModel.details,
-    //     aiContext: component.getContextFormValue(
-    //       baseAiContextDetailsViewModel.details?.aiContext ? [baseAiContextDetailsViewModel.details?.aiContext] : []
-    //     )[0]
-    //   })
-    // })
+      const pageDetails = component.formGroup.value
+      delete baseAiContextDetailsViewModel.details?.creationUser
+      delete baseAiContextDetailsViewModel.details?.modificationCount
+      delete baseAiContextDetailsViewModel.details?.modificationUser
+      expect(pageDetails).toEqual({
+        ...baseAiContextDetailsViewModel.details
+      })
+    })
 
-    // it('should display item details in page header', async () => {
-    //   component.headerLabels$ = of([
-    //     {
-    //       label: 'first',
-    //       value: 'first value'
-    //     },
-    //     {
-    //       label: 'second',
-    //       value: 'second value'
-    //     },
-    //     {
-    //       label: 'third',
-    //       icon: PrimeIcons.PLUS
-    //     },
-    //     {
-    //       label: 'fourth',
-    //       value: 'fourth value',
-    //       icon: PrimeIcons.QUESTION
-    //     }
-    //   ])
+    it('should display item details in page header', async () => {
+      component.headerLabels$ = of([
+        {
+          label: 'first',
+          value: 'first value'
+        },
+        {
+          label: 'second',
+          value: 'second value'
+        },
+        {
+          label: 'third',
+          icon: PrimeIcons.PLUS
+        },
+        {
+          label: 'fourth',
+          value: 'fourth value',
+          icon: PrimeIcons.QUESTION
+        }
+      ])
 
-    //   const pageHeader = await AiContextDetails.getHeader()
-    //   const objectDetails = await pageHeader.getObjectInfos()
-    //   expect(objectDetails.length).toBe(4)
+      const pageHeader = await AiContextDetails.getHeader()
+      const objectDetails = await pageHeader.getObjectInfos()
+      expect(objectDetails.length).toBe(4)
 
-    //   const firstDetailItem = await pageHeader.getObjectInfoByLabel('first')
-    //   expect(await firstDetailItem?.getLabel()).toEqual('first')
-    //   expect(await firstDetailItem?.getValue()).toEqual('first value')
-    //   expect(await firstDetailItem?.getIcon()).toBeUndefined()
+      const firstDetailItem = await pageHeader.getObjectInfoByLabel('first')
+      expect(await firstDetailItem?.getLabel()).toEqual('first')
+      expect(await firstDetailItem?.getValue()).toEqual('first value')
+      expect(await firstDetailItem?.getIcon()).toBeUndefined()
 
-    //   const secondDetailItem = await pageHeader.getObjectInfoByLabel('second')
-    //   expect(await secondDetailItem?.getLabel()).toEqual('second')
-    //   expect(await secondDetailItem?.getValue()).toEqual('second value')
-    //   expect(await secondDetailItem?.getIcon()).toBeUndefined()
+      const secondDetailItem = await pageHeader.getObjectInfoByLabel('second')
+      expect(await secondDetailItem?.getLabel()).toEqual('second')
+      expect(await secondDetailItem?.getValue()).toEqual('second value')
+      expect(await secondDetailItem?.getIcon()).toBeUndefined()
 
-    //   const thirdDetailItem = await pageHeader.getObjectInfoByLabel('third')
-    //   expect(await thirdDetailItem?.getLabel()).toEqual('third')
-    //   expect(await thirdDetailItem?.getValue()).toEqual('')
-    //   expect(await thirdDetailItem?.getIcon()).toEqual(PrimeIcons.PLUS)
+      const thirdDetailItem = await pageHeader.getObjectInfoByLabel('third')
+      expect(await thirdDetailItem?.getLabel()).toEqual('third')
+      expect(await thirdDetailItem?.getValue()).toEqual('')
+      expect(await thirdDetailItem?.getIcon()).toEqual(PrimeIcons.PLUS)
 
-    //   const fourthDetailItem = await pageHeader.getObjectInfoByLabel('fourth')
-    //   expect(await fourthDetailItem?.getLabel()).toEqual('fourth')
-    //   expect(await fourthDetailItem?.getValue()).toEqual('fourth value')
-    //   expect(await fourthDetailItem?.getIcon()).toEqual(PrimeIcons.QUESTION)
-    // })
+      const fourthDetailItem = await pageHeader.getObjectInfoByLabel('fourth')
+      expect(await fourthDetailItem?.getLabel()).toEqual('fourth')
+      expect(await fourthDetailItem?.getValue()).toEqual('fourth value')
+      expect(await fourthDetailItem?.getIcon()).toEqual(PrimeIcons.QUESTION)
+    })
 
-    // it('should enable or disable the form based on editMode', async () => {
-    //   const viewModelView = {
-    //     ...baseAiContextDetailsViewModel,
-    //     editMode: false
-    //   }
-    //   store.overrideSelector(selectAiContextDetailsViewModel, viewModelView)
-    //   store.refreshState()
-    //   fixture.detectChanges()
-    //   await fixture.whenStable()
-    //   expect(component.formGroup.disabled).toBeTruthy()
+    it('should enable or disable the form based on editMode', async () => {
+      const viewModelView = {
+        ...baseAiContextDetailsViewModel,
+        editMode: false
+      }
+      store.overrideSelector(selectAiContextDetailsViewModel, viewModelView)
+      store.refreshState()
+      fixture.detectChanges()
+      await fixture.whenStable()
+      expect(component.formGroup.disabled).toBeTruthy()
 
-    //   const viewModelEdit = {
-    //     ...baseAiContextDetailsViewModel,
-    //     editMode: true
-    //   }
-    //   store.overrideSelector(selectAiContextDetailsViewModel, viewModelEdit)
-    //   store.refreshState()
-    //   fixture.detectChanges()
-    //   await fixture.whenStable()
-    //   expect(component.formGroup.enabled).toBeTruthy()
-    // })
+      const viewModelEdit = {
+        ...baseAiContextDetailsViewModel,
+        editMode: true
+      }
+      store.overrideSelector(selectAiContextDetailsViewModel, viewModelEdit)
+      store.refreshState()
+      fixture.detectChanges()
+      await fixture.whenStable()
+      expect(component.formGroup.enabled).toBeTruthy()
+    })
 
-    // it('should show the correct actions for edit and view modes', async () => {
-    //   const viewModelView = {
-    //     ...baseAiContextDetailsViewModel,
-    //     editMode: false
-    //   }
-    //   store.overrideSelector(selectAiContextDetailsViewModel, viewModelView)
-    //   store.refreshState()
-    //   fixture.detectChanges()
-    //   await fixture.whenStable()
-    //   let actions: any[] = []
-    //   component.headerActions$.subscribe((a) => (actions = a))
-    //   const visibleActionsView = actions.filter((a) => a.showCondition)
-    //   const actionLabelsView = visibleActionsView.map((a) => a.labelKey)
-    //   expect(actionLabelsView).toContain('AI_CONTEXT_DETAILS.GENERAL.BACK')
-    //   expect(actionLabelsView).toContain('AI_CONTEXT_DETAILS.GENERAL.EDIT')
-    //   expect(actionLabelsView).not.toContain('AI_CONTEXT_DETAILS.GENERAL.SAVE')
-    //   expect(actionLabelsView).not.toContain('AI_CONTEXT_DETAILS.GENERAL.CANCEL')
+    it('should show the correct actions for edit and view modes', async () => {
+      const viewModelView = {
+        ...baseAiContextDetailsViewModel,
+        editMode: false
+      }
+      store.overrideSelector(selectAiContextDetailsViewModel, viewModelView)
+      store.refreshState()
+      fixture.detectChanges()
+      await fixture.whenStable()
+      let actions: any[] = []
+      component.headerActions$.subscribe((a) => (actions = a))
+      const visibleActionsView = actions.filter((a) => a.showCondition)
+      const actionLabelsView = visibleActionsView.map((a) => a.labelKey)
+      expect(actionLabelsView).toContain('AI_CONTEXT_DETAILS.GENERAL.BACK')
+      expect(actionLabelsView).toContain('AI_CONTEXT_DETAILS.GENERAL.EDIT')
+      expect(actionLabelsView).not.toContain('AI_CONTEXT_DETAILS.GENERAL.SAVE')
+      expect(actionLabelsView).not.toContain('AI_CONTEXT_DETAILS.GENERAL.CANCEL')
 
-    //   const viewModelEdit = {
-    //     ...baseAiContextDetailsViewModel,
-    //     editMode: true
-    //   }
-    //   store.overrideSelector(selectAiContextDetailsViewModel, viewModelEdit)
-    //   store.refreshState()
-    //   fixture.detectChanges()
-    //   await fixture.whenStable()
-    //   actions = []
-    //   component.headerActions$.subscribe((a) => (actions = a))
-    //   const visibleActionsEdit = actions.filter((a) => a.showCondition)
-    //   const actionLabelsEdit = visibleActionsEdit.map((a) => a.labelKey)
-    //   expect(actionLabelsEdit).toContain('AI_CONTEXT_DETAILS.GENERAL.SAVE')
-    //   expect(actionLabelsEdit).toContain('AI_CONTEXT_DETAILS.GENERAL.CANCEL')
-    //   expect(actionLabelsEdit).not.toContain('AI_CONTEXT_DETAILS.GENERAL.BACK')
-    //   expect(actionLabelsEdit).not.toContain('AI_CONTEXT_DETAILS.GENERAL.EDIT')
-    // })
+      const viewModelEdit = {
+        ...baseAiContextDetailsViewModel,
+        editMode: true
+      }
+      store.overrideSelector(selectAiContextDetailsViewModel, viewModelEdit)
+      store.refreshState()
+      fixture.detectChanges()
+      await fixture.whenStable()
+      actions = []
+      component.headerActions$.subscribe((a) => (actions = a))
+      const visibleActionsEdit = actions.filter((a) => a.showCondition)
+      const actionLabelsEdit = visibleActionsEdit.map((a) => a.labelKey)
+      expect(actionLabelsEdit).toContain('AI_CONTEXT_DETAILS.GENERAL.SAVE')
+      expect(actionLabelsEdit).toContain('AI_CONTEXT_DETAILS.GENERAL.CANCEL')
+      expect(actionLabelsEdit).not.toContain('AI_CONTEXT_DETAILS.GENERAL.BACK')
+      expect(actionLabelsEdit).not.toContain('AI_CONTEXT_DETAILS.GENERAL.EDIT')
+    })
 
-    // it('should dispatch edit action when edit() is called', () => {
-    //   const dispatchSpy = jest.spyOn(store, 'dispatch')
-    //   component.edit()
-    //   expect(dispatchSpy).toHaveBeenCalledWith(AiContextDetailsActions.editButtonClicked())
-    // })
+    it('should dispatch edit action when edit() is called', () => {
+      const dispatchSpy = jest.spyOn(store, 'dispatch')
+      component.edit()
+      expect(dispatchSpy).toHaveBeenCalledWith(AiContextDetailsActions.editButtonClicked())
+    })
 
-    // it('should dispatch navigate back action when goBack() is called', () => {
-    //   const dispatchSpy = jest.spyOn(store, 'dispatch')
-    //   component.goBack()
-    //   expect(dispatchSpy).toHaveBeenCalledWith(AiContextDetailsActions.navigateBackButtonClicked())
-    // })
+    it('should dispatch navigate back action when goBack() is called', () => {
+      const dispatchSpy = jest.spyOn(store, 'dispatch')
+      component.goBack()
+      expect(dispatchSpy).toHaveBeenCalledWith(AiContextDetailsActions.navigateBackButtonClicked())
+    })
 
-    // it('should dispatch cancel action with dirty state when cancel() is called', () => {
-    //   const dispatchSpy = jest.spyOn(store, 'dispatch')
-    //   component.formGroup.markAsDirty()
-    //   component.cancel()
-    //   expect(dispatchSpy).toHaveBeenCalledWith(AiContextDetailsActions.cancelButtonClicked({ dirty: true }))
-    // })
+    it('should dispatch cancel action with dirty state when cancel() is called', () => {
+      const dispatchSpy = jest.spyOn(store, 'dispatch')
+      component.formGroup.markAsDirty()
+      component.cancel()
+      expect(dispatchSpy).toHaveBeenCalledWith(AiContextDetailsActions.cancelButtonClicked({ dirty: true }))
+    })
 
-    // it('should dispatch save action with form values when save() is called', () => {
-    //   const dispatchSpy = jest.spyOn(store, 'dispatch')
-    //   component.formGroup.setValue({
-    //     id: 'id',
-    //     name: 'name',
-    //     description: 'desc'
-    //   })
-    //   component.save()
-    //   expect(dispatchSpy).toHaveBeenCalledWith(
-    //     AiContextDetailsActions.saveButtonClicked({
-    //       details: {
-    //         id: 'id',
-    //         name: 'name',
-    //         description: 'desc'
-    //       }
-    //     })
-    //   )
-    // })
+    it('should dispatch save action with form values when save() is called', () => {
+      const dispatchSpy = jest.spyOn(store, 'dispatch')
+      component.formGroup.setValue({
+        id: 'id',
+        appId: 'appId',
+        name: 'name',
+        description: 'desc',
+        AIKnowledgeBase: { id: '', name: '' },
+        provider: { id: '', name: '' },
+        aIKnowledgeVectorDb: { id: '', name: '' },
+        aIKnowledgeUrl: [],
+        aIKnowledgeDbs: [],
+        aIKnowledgeDocuments: []
+      })
+      component.save()
+      expect(dispatchSpy).toHaveBeenCalledWith(
+        AiContextDetailsActions.saveButtonClicked({
+          details: {
+            id: 'id',
+            appId: 'appId',
+            name: 'name',
+            description: 'desc',
+            AIKnowledgeBase: { id: '', name: '' },
+            provider: { id: '', name: '' },
+            aIKnowledgeVectorDb: { id: '', name: '' },
+            aIKnowledgeUrl: [],
+            aIKnowledgeDbs: [],
+            aIKnowledgeDocuments: []
+          }
+        })
+      )
+    })
 
-    // it('should dispatch delete action when delete() is called', () => {
-    //   const dispatchSpy = jest.spyOn(store, 'dispatch')
-    //   component.delete()
-    //   expect(dispatchSpy).toHaveBeenCalledWith(AiContextDetailsActions.deleteButtonClicked())
-    // })
+    it('should dispatch delete action when delete() is called', () => {
+      const dispatchSpy = jest.spyOn(store, 'dispatch')
+      component.delete()
+      expect(dispatchSpy).toHaveBeenCalledWith(AiContextDetailsActions.deleteButtonClicked())
+    })
 
-    // it('should call breadcrumbService.setItems on ngOnInit', () => {
-    //   const breadcrumbSpy = jest.spyOn(breadcrumbService, 'setItems')
-    //   component.ngOnInit()
-    //   expect(breadcrumbSpy).toHaveBeenCalledWith([
-    //     {
-    //       titleKey: 'AI_CONTEXT_DETAILS.BREADCRUMB',
-    //       labelKey: 'AI_CONTEXT_DETAILS.BREADCRUMB',
-    //       routerLink: '/ai-context'
-    //     }
-    //   ])
-    // })
+    it('should call breadcrumbService.setItems on ngOnInit', () => {
+      const breadcrumbSpy = jest.spyOn(breadcrumbService, 'setItems')
+      component.ngOnInit()
+      expect(breadcrumbSpy).toHaveBeenCalledWith([
+        {
+          titleKey: 'AI_CONTEXT_DETAILS.BREADCRUMB',
+          labelKey: 'AI_CONTEXT_DETAILS.BREADCRUMB',
+          routerLink: '/ai-context'
+        }
+      ])
+    })
 
-    // it('should execute actionCallback for each header action', () => {
-    //   const editSpy = jest.spyOn(component, 'edit')
-    //   const goBackSpy = jest.spyOn(component, 'goBack')
-    //   const cancelSpy = jest.spyOn(component, 'cancel')
-    //   const saveSpy = jest.spyOn(component, 'save')
-    //   const deleteSpy = jest.spyOn(component, 'delete')
+    it('should execute actionCallback for each header action', () => {
+      const editSpy = jest.spyOn(component, 'edit')
+      const goBackSpy = jest.spyOn(component, 'goBack')
+      const cancelSpy = jest.spyOn(component, 'cancel')
+      const saveSpy = jest.spyOn(component, 'save')
+      const deleteSpy = jest.spyOn(component, 'delete')
 
-    //   const viewModelView = {
-    //     ...baseAiContextDetailsViewModel,
-    //     editMode: false
-    //   }
-    //   store.overrideSelector(selectAiContextDetailsViewModel, viewModelView)
-    //   store.refreshState()
-    //   fixture.detectChanges()
-    //   let actions: any[] = []
-    //   component.headerActions$.subscribe((a) => (actions = a))
-    //   actions.forEach((action) => {
-    //     if (typeof action.actionCallback === 'function') {
-    //       action.actionCallback()
-    //     }
-    //   })
-    //   expect(editSpy).toHaveBeenCalled()
-    //   expect(goBackSpy).toHaveBeenCalled()
-    //   expect(cancelSpy).toHaveBeenCalled()
-    //   expect(saveSpy).toHaveBeenCalled()
-    //   expect(deleteSpy).toHaveBeenCalled()
+      const viewModelView = {
+        ...baseAiContextDetailsViewModel,
+        editMode: false
+      }
+      store.overrideSelector(selectAiContextDetailsViewModel, viewModelView)
+      store.refreshState()
+      fixture.detectChanges()
+      let actions: any[] = []
+      component.headerActions$.subscribe((a) => (actions = a))
+      actions.forEach((action) => {
+        if (typeof action.actionCallback === 'function') {
+          action.actionCallback()
+        }
+      })
+      expect(editSpy).toHaveBeenCalled()
+      expect(goBackSpy).toHaveBeenCalled()
+      expect(cancelSpy).toHaveBeenCalled()
+      expect(saveSpy).toHaveBeenCalled()
+      expect(deleteSpy).toHaveBeenCalled()
 
-    //   const viewModelEdit = {
-    //     ...baseAiContextDetailsViewModel,
-    //     editMode: true
-    //   }
-    //   store.overrideSelector(selectAiContextDetailsViewModel, viewModelEdit)
-    //   store.refreshState()
-    //   fixture.detectChanges()
-    //   actions = []
-    //   component.headerActions$.subscribe((a) => (actions = a))
-    //   actions.forEach((action) => {
-    //     if (typeof action.actionCallback === 'function') {
-    //       action.actionCallback()
-    //     }
-    //   })
-    //   expect(cancelSpy).toHaveBeenCalled()
-    //   expect(saveSpy).toHaveBeenCalled()
-    // })
+      const viewModelEdit = {
+        ...baseAiContextDetailsViewModel,
+        editMode: true
+      }
+      store.overrideSelector(selectAiContextDetailsViewModel, viewModelEdit)
+      store.refreshState()
+      fixture.detectChanges()
+      actions = []
+      component.headerActions$.subscribe((a) => (actions = a))
+      actions.forEach((action) => {
+        if (typeof action.actionCallback === 'function') {
+          action.actionCallback()
+        }
+      })
+      expect(cancelSpy).toHaveBeenCalled()
+      expect(saveSpy).toHaveBeenCalled()
+    })
 
-    // it('should dispatch cancel action with pristine state when cancel() is called', () => {
-    //   const dispatchSpy = jest.spyOn(store, 'dispatch')
-    //   component.formGroup.markAsPristine()
-    //   component.cancel()
-    //   expect(dispatchSpy).toHaveBeenCalledWith(AiContextDetailsActions.cancelButtonClicked({ dirty: false }))
-    // })
+    it('should dispatch cancel action with pristine state when cancel() is called', () => {
+      const dispatchSpy = jest.spyOn(store, 'dispatch')
+      component.formGroup.markAsPristine()
+      component.cancel()
+      expect(dispatchSpy).toHaveBeenCalledWith(AiContextDetailsActions.cancelButtonClicked({ dirty: false }))
+    })
 
-    // it('should patch the form with details and matched context', () => {
-    //   const context = { id: 'ctx1', name: 'Context 1' } as any
-    //   const details = { ...baseAiContextDetailsViewModel.details, aiContext: context } as any
-    //   const viewModel = {
-    //     ...baseAiContextDetailsViewModel,
-    //     details,
-    //     editMode: false,
-    //     contexts: [context]
-    //   } as any
-    //   store.overrideSelector(selectAiContextDetailsViewModel, viewModel)
-    //   store.refreshState()
-    //   fixture.detectChanges()
-    //   expect(component.formGroup.value.id).toBe(details.id)
-    //   expect(component.formGroup.value.aiContext.value).toEqual(context)
-    // })
+    it('should patch the form with details and matched provider', () => {
+      const provider = { id: 'ctx1', name: 'Context 1' } as any
+      const details = { ...baseAiContextDetailsViewModel.details, provider: provider } as any
+      const viewModel = {
+        ...baseAiContextDetailsViewModel,
+        details,
+        editMode: false,
+        provider: [provider]
+      } as any
+      store.overrideSelector(selectAiContextDetailsViewModel, viewModel)
+      store.refreshState()
+      fixture.detectChanges()
+      expect(component.formGroup.value.id).toBe(details.id)
+      expect(component.formGroup.value.provider).toEqual(provider)
+    })
 
-    // // it('should emit correct displayContexts$ for details with aiContext', (done) => {
-    // //   const context = { value: [{ id: 'ctx1' }], name: 'Context 1' } as any
-    // //   const details = { ...baseAiContextDetailsViewModel.details, aiContext: context } as any
-    // //   const viewModel = { ...baseAiContextDetailsViewModel, details, contexts: [context] } as any
-    // //   store.overrideSelector(selectAiContextDetailsViewModel, viewModel)
-    // //   store.refreshState()
-    // //   fixture.detectChanges()
-    // //   component.displayContexts$.subscribe((contexts) => {
-    // //     expect(contexts.length).toBeGreaterThan(0)
-    // //     expect(contexts[0].value).toEqual(context)
-    // //     done()
-    // //   })
-    // // })
+    it('should patch the form with details and matched knowledge base', () => {
+      const knowledgeBase = { id: 'kb1', name: 'Knowledge Base 1' } as any
+      const details = { ...baseAiContextDetailsViewModel.details, AIKnowledgeBase: knowledgeBase } as any
+      const viewModel = {
+        ...baseAiContextDetailsViewModel,
+        details,
+        editMode: false,
+        aiKnowledgeBases: [knowledgeBase]
+      } as any
+      store.overrideSelector(selectAiContextDetailsViewModel, viewModel)
+      store.refreshState()
+      fixture.detectChanges()
+      expect(component.formGroup.value.id).toBe(details.id)
+      expect(component.formGroup.value.AIKnowledgeBase).toEqual(knowledgeBase)
+    })
 
-    // it('should handle missing details gracefully', () => {
-    //   const viewModel = { ...baseAiContextDetailsViewModel, details: undefined } as any
-    //   store.overrideSelector(selectAiContextDetailsViewModel, viewModel)
-    //   store.refreshState()
-    //   fixture.detectChanges()
-    //   expect(component.formGroup.value.id).toBe('')
-    // })
+    it('should patch the form with details and matched vector db', () => {
+      const vectorDb = { id: 'vdb1', name: 'Vector DB 1' } as any
+      const details = { ...baseAiContextDetailsViewModel.details, aIKnowledgeVectorDb: vectorDb } as any
+      const viewModel = {
+        ...baseAiContextDetailsViewModel,
+        details,
+        editMode: false,
+        aiKnowledgeVectorDbs: [vectorDb]
+      } as any
+      store.overrideSelector(selectAiContextDetailsViewModel, viewModel)
+      store.refreshState()
+      fixture.detectChanges()
+      expect(component.formGroup.value.id).toBe(details.id)
+      expect(component.formGroup.value.aIKnowledgeVectorDb).toEqual(vectorDb)
+    })
 
-    // it('should handle empty contexts array gracefully', () => {
-    //   const details = { ...baseAiContextDetailsViewModel.details, aiContext: { name: '', value: {} } } as any
-    //   const viewModel = { ...baseAiContextDetailsViewModel, details, contexts: [] } as any
-    //   store.overrideSelector(selectAiContextDetailsViewModel, viewModel)
-    //   store.refreshState()
-    //   fixture.detectChanges()
-    //   expect(component.formGroup.value.aiContext).toStrictEqual({ label: 'undefined:', value: { name: '', value: {} } })
-    // })
+    it('should emit correct providersSuggestions$ for details with provider', (done) => {
+      const selectedProvider = {
+        id: 'id-1',
+        name: 'Selected Provider',
+        description: 'Selected provider description',
+        llmUrl: 'selected-url',
+        appId: 'selected-app',
+        modelName: 'selected-model',
+        modelVersion: '1.0',
+        apiKey: 'selected-key'
+      }
 
-    // describe('aiContextDetailsReducer (integration)', () => {
-    //   it('should return the initial state for an unknown action', () => {
-    //     const action = { type: 'Unknown' } as any
-    //     const state = aiContextDetailsReducer(undefined, action)
-    //     expect(state).toBe(initialState)
-    //   })
+      const otherProvider = {
+        id: 'id-2',
+        name: 'Other Provider',
+        description: 'Other provider description',
+        llmUrl: 'other-url',
+        appId: 'other-app',
+        modelName: 'other-model',
+        modelVersion: '2.0',
+        apiKey: 'other-key'
+      }
 
-    //   it('should handle aiContextDetailsReceived', () => {
-    //     const details = {
-    //       id: '1',
-    //       name: 'Test',
-    //       description: '',
-    //       aiContext: { id: 'ctx', name: 'Context' },
-    //       vdb: '',
-    //       vdbCollection: '',
-    //       modificationCount: 0
-    //     }
-    //     const action = AiContextDetailsActions.aiContextDetailsReceived({ details })
-    //     const state = aiContextDetailsReducer(initialState, action)
-    //     expect(state.details).toEqual(details)
-    //     expect(state.detailsLoadingIndicator).toBe(false)
-    //     expect(state.detailsLoaded).toBe(true)
-    //   })
+      const details = { ...baseAiContextDetailsViewModel.details, provider: selectedProvider }
+      const viewModel = {
+        ...baseAiContextDetailsViewModel,
+        details,
+        aiProviders: [selectedProvider, otherProvider]
+      }
 
-    //   it('should handle aiContextDetailsLoadingFailed', () => {
-    //     const preState: AiContextDetailsState = {
-    //       ...initialState,
-    //       details: {
-    //         id: '2',
-    //         name: 'Old',
-    //         description: '',
-    //         aIKnowledgeDbs: [
-    //           {
-    //             id: 'ctx',
-    //             name: 'Context',
-    //             db: '',
-    //             user: '',
-    //             pwd: ''
-    //           }
-    //         ]
-    //       },
-    //       detailsLoadingIndicator: true,
-    //       detailsLoaded: true
-    //     }
-    //     const action = AiContextDetailsActions.aiContextDetailsLoadingFailed({ error: null })
-    //     const state = aiContextDetailsReducer(preState, action)
-    //     expect(state.details).toEqual(initialState.details)
-    //     expect(state.detailsLoadingIndicator).toBe(false)
-    //     expect(state.detailsLoaded).toBe(false)
-    //   })
+      store.overrideSelector(selectAiContextDetailsViewModel, viewModel)
+      store.refreshState()
+      fixture.detectChanges()
 
-    //   it('should handle aiContextAiKnowledgeBasesReceived', () => {
-    //     const aiknowledgeBases = [{ id: 'ctx1', name: 'Context 1' }]
-    //     const action = AiContextDetailsActions.aiContextAiKnowledgeBasesReceived({ aiKnowledgeBases: aiknowledgeBases })
-    //     const state = aiContextDetailsReducer(initialState, action)
-    //     expect(state.aiKnowledgeBases).toEqual(aiknowledgeBases)
-    //     expect(state.aiKnowledgeBasesLoadingIndicator).toBe(false)
-    //     expect(state.aiKnowledgeBasesLoaded).toBe(true)
-    //   })
+      component.providersSuggestions$.subscribe((providers) => {
+        expect(providers.length).toBe(1)
+        expect(providers[0]).toEqual(otherProvider)
+        expect(providers).not.toContain(selectedProvider)
+        done()
+      })
+    })
 
-    //   it('should handle aiContextAiKnowledgeBasesLoadingFailed', () => {
-    //     const preState: AiContextDetailsState = {
-    //       ...initialState,
-    //       aiKnowledgeBases: [{ id: 'ctx2', name: 'Old Context' }],
-    //       aiKnowledgeBasesLoadingIndicator: true,
-    //       aiKnowledgeBasesLoaded: true
-    //     }
-    //     const action = AiContextDetailsActions.aiContextAiKnowledgeBasesLoadingFailed({ error: null })
-    //     const state = aiContextDetailsReducer(preState, action)
-    //     expect(state.aiKnowledgeBases).toEqual(initialState.aiKnowledgeBases)
-    //     expect(state.aiKnowledgeBasesLoadingIndicator).toBe(false)
-    //     expect(state.aiKnowledgeBasesLoaded).toBe(false)
-    //   })
+    it('should emit correct knowledgeBaseSuggestions$ for details with knowledge base', (done) => {
+      const selectedKnowledgeBase = {
+        id: 'id-1',
+        name: 'Selected Knowledge Base',
+        description: 'Selected knowledge base description',
+        aiContext: []
+      }
 
-    //   it('should handle navigatedToDetailsPage', () => {
-    //     const preState: AiContextDetailsState = {
-    //       ...initialState,
-    //       details: {
-    //         id: '2',
-    //         name: 'Old',
-    //         description: '',
-    //         aIKnowledgeDbs: [
-    //           {
-    //             id: 'ctx',
-    //             name: 'Context',
-    //             db: '',
-    //             user: '',
-    //             pwd: ''
-    //           }
-    //         ]
-    //       },
-    //       editMode: true
-    //     }
-    //     const action = AiContextDetailsActions.navigatedToDetailsPage({ id: undefined })
-    //     const state = aiContextDetailsReducer(preState, action)
-    //     expect(state).toEqual(initialState)
-    //   })
+      const otherKnowledgeBase = {
+        id: 'id-2',
+        name: 'Other Knowledge Base',
+        description: 'Other knowledge base description',
+        aiContext: []
+      }
 
-    //   it('should handle editButtonClicked', () => {
-    //     const action = AiContextDetailsActions.editButtonClicked()
-    //     const state = aiContextDetailsReducer(initialState, action)
-    //     expect(state.editMode).toBe(true)
-    //   })
+      const details = { ...baseAiContextDetailsViewModel.details, AIKnowledgeBase: selectedKnowledgeBase }
+      const viewModel = {
+        ...baseAiContextDetailsViewModel,
+        details,
+        aiKnowledgeBases: [selectedKnowledgeBase, otherKnowledgeBase]
+      }
 
-    //   it('should handle saveButtonClicked', () => {
-    //     const details = {
-    //       id: '3',
-    //       name: 'Save',
-    //       description: '',
-    //       aiContext: { id: 'ctx', name: 'Context' },
-    //       vdb: '',
-    //       vdbCollection: '',
-    //       modificationCount: 0
-    //     }
-    //     const action = AiContextDetailsActions.saveButtonClicked({ details })
-    //     const state = aiContextDetailsReducer(initialState, action)
-    //     expect(state.details).toEqual(details)
-    //     expect(state.editMode).toBe(false)
-    //     expect(state.isSubmitting).toBe(true)
-    //   })
+      store.overrideSelector(selectAiContextDetailsViewModel, viewModel)
+      store.refreshState()
+      fixture.detectChanges()
 
-    //   it('should handle navigateBackButtonClicked', () => {
-    //     const action = AiContextDetailsActions.navigateBackButtonClicked()
-    //     const state = aiContextDetailsReducer(initialState, action)
-    //     expect(state).toEqual(initialState)
-    //   })
+      component.knowledgeBaseSuggestions$.subscribe((knowledgeBases) => {
+        expect(knowledgeBases.length).toBe(1)
+        expect(knowledgeBases[0]).toEqual(otherKnowledgeBase)
+        expect(knowledgeBases).not.toContain(selectedKnowledgeBase)
+        done()
+      })
+    })
 
-    //   it('should handle cancelEditConfirmClicked and related actions', () => {
-    //     const actions = [
-    //       AiContextDetailsActions.cancelEditConfirmClicked(),
-    //       AiContextDetailsActions.cancelEditNotDirty(),
-    //       AiContextDetailsActions.updateAiContextCancelled(),
-    //       AiContextDetailsActions.updateAiContextSucceeded()
-    //     ]
-    //     actions.forEach((action) => {
-    //       const preState: AiContextDetailsState = { ...initialState, editMode: true, isSubmitting: true }
-    //       const state = aiContextDetailsReducer(preState, action)
-    //       expect(state.editMode).toBe(false)
-    //       expect(state.isSubmitting).toBe(false)
-    //     })
-    //   })
+    it('should emit correct vectorDbSuggestions$ for details with vector db', (done) => {
+      const selectedVectorDb = {
+        id: 'id-1',
+        name: 'Selected Vector DB',
+        description: 'Selected vector db description',
+        vdb: 'vdb-1',
+        vdbCollection: 'collection-1',
+        aiContext: {}
+      }
 
-    //   it('should handle updateAiContextFailed', () => {
-    //     const preState: AiContextDetailsState = { ...initialState, isSubmitting: true }
-    //     const action = AiContextDetailsActions.updateAiContextFailed({ error: null })
-    //     const state = aiContextDetailsReducer(preState, action)
-    //     expect(state.isSubmitting).toBe(false)
-    //   })
-    // })
+      const otherVectorDb = {
+        id: 'id-2',
+        name: 'Other Vector DB',
+        description: 'Other vector db description',
+        vdb: 'vdb-2',
+        vdbCollection: 'collection-2',
+        aiContext: {}
+      }
 
-    // describe('AiContextDetails Selectors', () => {
-    //   const baseState: any = {
-    //     details: {
-    //       id: '1',
-    //       name: 'Test',
-    //       aiContext: { id: 'ctx', name: 'Context' },
-    //       vdb: '',
-    //       vdbCollection: '',
-    //       modificationCount: 0
-    //     },
-    //     contexts: [{ id: 'ctx', name: 'Context' }],
-    //     detailsLoaded: true,
-    //     detailsLoadingIndicator: false,
-    //     contextsLoaded: true,
-    //     contextsLoadingIndicator: false,
-    //     backNavigationPossible: true,
-    //     editMode: false,
-    //     isSubmitting: false
-    //   }
+      const details = { ...baseAiContextDetailsViewModel.details, aIKnowledgeVectorDb: selectedVectorDb }
+      const viewModel = {
+        ...baseAiContextDetailsViewModel,
+        details,
+        aiKnowledgeVectorDbs: [selectedVectorDb, otherVectorDb]
+      }
 
-    // it('should select the full view model', () => {
-    //   const result = selectAiContextDetailsViewModel.projector(
-    //     baseState.details,
-    //     baseState.contexts,
-    //     baseState.detailsLoaded,
-    //     baseState.detailsLoadingIndicator,
-    //     baseState.contextsLoaded,
-    //     baseState.contextsLoadingIndicator,
-    //     true,
-    //     baseState.editMode,
-    //     baseState.isSubmitting
-    //   )
+      store.overrideSelector(selectAiContextDetailsViewModel, viewModel)
+      store.refreshState()
+      fixture.detectChanges()
 
-    //   expect(result).toEqual({
-    //     details: baseState.details,
-    //     contexts: baseState.contexts,
-    //     detailsLoaded: true,
-    //     detailsLoadingIndicator: false,
-    //     contextsLoaded: true,
-    //     contextsLoadingIndicator: false,
-    //     backNavigationPossible: true,
-    //     editMode: false,
-    //     isSubmitting: false
-    //   })
-    // })
+      component.vectorDbSuggestions$.subscribe((vectorDbs) => {
+        expect(vectorDbs.length).toBe(1)
+        expect(vectorDbs[0]).toEqual(otherVectorDb)
+        expect(vectorDbs).not.toContain(selectedVectorDb)
+        done()
+      })
+    })
 
-    // it('should handle undefined details and empty contexts', () => {
-    //   const result = selectAiContextDetailsViewModel.projector(
-    //     undefined,
-    //     [],
-    //     false,
-    //     true,
-    //     false,
-    //     true,
-    //     false,
-    //     true,
-    //     false
-    //   )
-    //   expect(result.details).toBeUndefined()
-    //   expect(result.contexts).toEqual([])
-    //   expect(result.detailsLoaded).toBe(false)
-    //   expect(result.detailsLoadingIndicator).toBe(true)
-    // })
-    // })
+    it('should handle missing details gracefully', () => {
+      const viewModel = { ...baseAiContextDetailsViewModel, details: undefined } as any
+      store.overrideSelector(selectAiContextDetailsViewModel, viewModel)
+      store.refreshState()
+      fixture.detectChanges()
+      expect(component.formGroup.value.id).toBe('')
+    })
+
+    it('should handle empty aIKnowledgeDocuments array gracefully', () => {
+      const details = {
+        ...baseAiContextDetailsViewModel.details,
+        aIKnowledgeDocuments: []
+      }
+      const viewModel = {
+        ...baseAiContextDetailsViewModel,
+        details
+      }
+      store.overrideSelector(selectAiContextDetailsViewModel, viewModel)
+      store.refreshState()
+      fixture.detectChanges()
+      expect(component.formGroup.value.aIKnowledgeDocuments).toEqual([])
+    })
+
+    describe('aiContextDetailsReducer (integration)', () => {
+      it('should return the initial state for an unknown action', () => {
+        const action = { type: 'Unknown' } as any
+        const state = aiContextDetailsReducer(undefined, action)
+        expect(state).toBe(initialState)
+      })
+
+      it('should handle aiContextDetailsReceived', () => {
+        const details = {
+          id: '1',
+          name: 'Test',
+          description: '',
+          aiContext: { id: 'ctx', name: 'Context' },
+          vdb: '',
+          vdbCollection: '',
+          modificationCount: 0
+        }
+        const action = AiContextDetailsActions.aiContextDetailsReceived({ details })
+        const state = aiContextDetailsReducer(initialState, action)
+        expect(state.details).toEqual(details)
+        expect(state.detailsLoadingIndicator).toBe(false)
+        expect(state.detailsLoaded).toBe(true)
+      })
+
+      it('should handle aiContextDetailsLoadingFailed', () => {
+        const preState: AiContextDetailsState = {
+          ...initialState,
+          details: {
+            id: '2',
+            name: 'Old',
+            description: '',
+            aIKnowledgeDbs: [
+              {
+                id: 'ctx',
+                name: 'Context',
+                db: '',
+                user: '',
+                pwd: ''
+              }
+            ]
+          },
+          detailsLoadingIndicator: true,
+          detailsLoaded: true
+        }
+        const action = AiContextDetailsActions.aiContextDetailsLoadingFailed({ error: null })
+        const state = aiContextDetailsReducer(preState, action)
+        expect(state.details).toEqual(initialState.details)
+        expect(state.detailsLoadingIndicator).toBe(false)
+        expect(state.detailsLoaded).toBe(false)
+      })
+
+      it('should handle aiContextAiKnowledgeBasesReceived', () => {
+        const aiknowledgeBases = [{ id: 'ctx1', name: 'Context 1' }]
+        const action = AiContextDetailsActions.aiContextAiKnowledgeBasesReceived({ aiKnowledgeBases: aiknowledgeBases })
+        const state = aiContextDetailsReducer(initialState, action)
+        expect(state.aiKnowledgeBases).toEqual(aiknowledgeBases)
+        expect(state.aiKnowledgeBasesLoadingIndicator).toBe(false)
+        expect(state.aiKnowledgeBasesLoaded).toBe(true)
+      })
+
+      it('should handle aiContextAiKnowledgeBasesLoadingFailed', () => {
+        const preState: AiContextDetailsState = {
+          ...initialState,
+          aiKnowledgeBases: [{ id: 'ctx2', name: 'Old Context' }],
+          aiKnowledgeBasesLoadingIndicator: true,
+          aiKnowledgeBasesLoaded: true
+        }
+        const action = AiContextDetailsActions.aiContextAiKnowledgeBasesLoadingFailed({ error: null })
+        const state = aiContextDetailsReducer(preState, action)
+        expect(state.aiKnowledgeBases).toEqual(initialState.aiKnowledgeBases)
+        expect(state.aiKnowledgeBasesLoadingIndicator).toBe(false)
+        expect(state.aiKnowledgeBasesLoaded).toBe(false)
+      })
+
+      it('should handle navigatedToDetailsPage', () => {
+        const preState: AiContextDetailsState = {
+          ...initialState,
+          details: {
+            id: '2',
+            name: 'Old',
+            description: '',
+            aIKnowledgeDbs: [
+              {
+                id: 'ctx',
+                name: 'Context',
+                db: '',
+                user: '',
+                pwd: ''
+              }
+            ]
+          },
+          editMode: true
+        }
+        const action = AiContextDetailsActions.navigatedToDetailsPage({ id: undefined })
+        const state = aiContextDetailsReducer(preState, action)
+        expect(state).toEqual(initialState)
+      })
+
+      it('should handle editButtonClicked', () => {
+        const action = AiContextDetailsActions.editButtonClicked()
+        const state = aiContextDetailsReducer(initialState, action)
+        expect(state.editMode).toBe(true)
+      })
+
+      it('should handle saveButtonClicked', () => {
+        const details = {
+          id: '3',
+          name: 'Save',
+          description: '',
+          provider: { id: 'id-1', name: 'provider' },
+          vdb: '',
+          vdbCollection: '',
+          modificationCount: 0
+        }
+        const action = AiContextDetailsActions.saveButtonClicked({ details })
+        const state = aiContextDetailsReducer(initialState, action)
+        expect(state.details).toEqual(details)
+        expect(state.editMode).toBe(false)
+        expect(state.isSubmitting).toBe(true)
+      })
+
+      it('should handle navigateBackButtonClicked', () => {
+        const action = AiContextDetailsActions.navigateBackButtonClicked()
+        const state = aiContextDetailsReducer(initialState, action)
+        expect(state).toEqual(initialState)
+      })
+
+      it('should handle cancelEditConfirmClicked and related actions', () => {
+        const actions = [
+          AiContextDetailsActions.cancelEditConfirmClicked(),
+          AiContextDetailsActions.cancelEditNotDirty(),
+          AiContextDetailsActions.updateAiContextCancelled(),
+          AiContextDetailsActions.updateAiContextSucceeded()
+        ]
+        actions.forEach((action) => {
+          const preState: AiContextDetailsState = { ...initialState, editMode: true, isSubmitting: true }
+          const state = aiContextDetailsReducer(preState, action)
+          expect(state.editMode).toBe(false)
+          expect(state.isSubmitting).toBe(false)
+        })
+      })
+
+      it('should handle updateAiContextFailed', () => {
+        const preState: AiContextDetailsState = { ...initialState, isSubmitting: true }
+        const action = AiContextDetailsActions.updateAiContextFailed({ error: null })
+        const state = aiContextDetailsReducer(preState, action)
+        expect(state.isSubmitting).toBe(false)
+      })
+    })
+
+    describe('AiContextDetails Selectors', () => {
+      const baseState: any = {
+        details: {},
+        detailsLoaded: true,
+        detailsLoadingIndicator: false,
+
+        aiProviders: [],
+        aiProvidersLoaded: true,
+        aiProvidersLoadingIndicator: false,
+
+        aiKnowledgeBases: [],
+        aiKnowledgeBasesLoaded: true,
+        aiKnowledgeBasesLoadingIndicator: false,
+
+        aiKnowledgeVectorDbs: [],
+        aiKnowledgeVectorDbsLoaded: true,
+        aiKnowledgeVectorDbsLoadingIndicator: false,
+
+        backNavigationPossible: true,
+        editMode: false,
+        isSubmitting: false
+      }
+
+      it('should select the full view model', () => {
+        const result = selectAiContextDetailsViewModel.projector(
+          baseState.details,
+          baseState.detailsLoadingIndicator,
+          baseState.detailsLoaded,
+
+          baseState.aiProviders,
+          baseState.aiProvidersLoadingIndicator,
+          baseState.aiProvidersLoaded,
+
+          baseState.aiKnowledgeBases,
+          baseState.aiKnowledgeBasesLoadingIndicator,
+          baseState.aiKnowledgeBasesLoaded,
+
+          baseState.aiKnowledgeVectorDbs,
+          baseState.aiKnowledgeVectorDbsLoadingIndicator,
+          baseState.aiKnowledgeVectorDbsLoaded,
+
+          true,
+          baseState.editMode,
+          baseState.isSubmitting
+        )
+
+        expect(result).toEqual({
+          details: baseState.details,
+          detailsLoadingIndicator: false,
+          detailsLoaded: true,
+
+          aiProviders: baseState.aiProviders,
+          aiProvidersLoadingIndicator: false,
+          aiProvidersLoaded: true,
+
+          aiKnowledgeBases: baseState.aiKnowledgeBases,
+          aiKnowledgeBasesLoadingIndicator: false,
+          aiKnowledgeBasesLoaded: true,
+
+          aiKnowledgeVectorDbs: baseState.aiKnowledgeVectorDbs,
+          aiKnowledgeVectorDbsLoadingIndicator: false,
+          aiKnowledgeVectorDbsLoaded: true,
+
+          backNavigationPossible: true,
+          editMode: false,
+          isSubmitting: false
+        })
+      })
+
+      it('should handle undefined details and empty contexts', () => {
+        const result = selectAiContextDetailsViewModel.projector(
+          undefined,
+          true,
+          false,
+
+          [],
+          false,
+          true,
+
+          [],
+          false,
+          true,
+
+          [],
+          false,
+          true,
+
+          true,
+          false,
+          false
+        )
+        expect(result.details).toBeUndefined()
+        expect(result.aiKnowledgeBases).toEqual([])
+        expect(result.detailsLoaded).toBe(false)
+        expect(result.detailsLoadingIndicator).toBe(true)
+      })
+    })
   })
 })

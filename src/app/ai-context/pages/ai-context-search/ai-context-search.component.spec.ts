@@ -1,9 +1,8 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+import { PrimeIcons } from 'primeng/api'
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed'
-import { HttpClientTestingModule } from '@angular/common/http/testing'
+import { provideHttpClientTesting } from '@angular/common/http/testing'
 import { ComponentFixture, TestBed } from '@angular/core/testing'
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms'
-// import { By } from '@angular/platform-browser'
 import { NoopAnimationsModule } from '@angular/platform-browser/animations'
 import { ActivatedRoute } from '@angular/router'
 import { LetDirective } from '@ngrx/component'
@@ -11,7 +10,13 @@ import { ofType } from '@ngrx/effects'
 import { Store, StoreModule } from '@ngrx/store'
 import { MockStore, provideMockStore } from '@ngrx/store/testing'
 import { TranslateService } from '@ngx-translate/core'
-import { BreadcrumbService, ColumnType, PortalCoreModule, UserService } from '@onecx/portal-integration-angular'
+import {
+  BreadcrumbService,
+  ColumnType,
+  PortalCoreModule,
+  RowListGridData,
+  UserService
+} from '@onecx/portal-integration-angular'
 import { TranslateTestingModule } from 'ngx-translate-testing'
 import { DialogService } from 'primeng/dynamicdialog'
 import { AiContextSearchActions } from './ai-context-search.actions'
@@ -21,7 +26,8 @@ import { AiContextSearchHarness } from './ai-context-search.harness'
 import { initialState } from './ai-context-search.reducers'
 import { selectAiContextSearchViewModel } from './ai-context-search.selectors'
 import { AiContextSearchViewModel } from './ai-context-search.viewmodel'
-
+import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http'
+import * as selectors from './ai-context-search.selectors'
 describe('AiContextSearchComponent', () => {
   const origAddEventListener = window.addEventListener
   const origPostMessage = window.postMessage
@@ -36,13 +42,10 @@ describe('AiContextSearchComponent', () => {
   }
 
   window.postMessage = (m: any) => {
-    // eslint-disable-next-line @typescript-eslint/no-empty-function
     listeners.forEach((l) =>
       l({
         data: m,
-        // eslint-disable-next-line @typescript-eslint/no-empty-function
         stopImmediatePropagation: () => {},
-        // eslint-disable-next-line @typescript-eslint/no-empty-function
         stopPropagation: () => {}
       })
     )
@@ -58,7 +61,7 @@ describe('AiContextSearchComponent', () => {
   let fixture: ComponentFixture<AiContextSearchComponent>
   let store: MockStore<Store>
   let formBuilder: FormBuilder
-  let aiContextSearch: AiContextSearchHarness
+  let AiContextSearch: AiContextSearchHarness
 
   const mockActivatedRoute = {
     snapshot: {
@@ -67,15 +70,19 @@ describe('AiContextSearchComponent', () => {
   }
   const baseAiContextSearchViewModel: AiContextSearchViewModel = {
     columns: aiContextSearchColumns,
-    searchCriteria: { appId: '', name: '', description: '' },
-    searchExecuted: true,
+    searchCriteria: {
+      appId: '',
+      name: '',
+      description: ''
+    },
     results: [],
-    searchLoadingIndicator: false,
-    diagramComponentState: null,
+    displayedColumns: [],
+    chartVisible: false,
     resultComponentState: null,
     searchHeaderComponentState: null,
-    chartVisible: false,
-    displayedColumns: []
+    diagramComponentState: null,
+    searchLoadingIndicator: false,
+    searchExecuted: false
   }
 
   beforeAll(() => {
@@ -106,16 +113,17 @@ describe('AiContextSearchComponent', () => {
           'de',
           require('./../../../../assets/i18n/de.json')
         ),
-        HttpClientTestingModule,
         NoopAnimationsModule
       ],
       providers: [
         DialogService,
         provideMockStore({
-          initialState: { aiContext: { search: initialState } }
+          initialState: { AiContext: { search: initialState } }
         }),
         FormBuilder,
-        { provide: ActivatedRoute, useValue: mockActivatedRoute }
+        { provide: ActivatedRoute, useValue: mockActivatedRoute },
+        provideHttpClient(withInterceptorsFromDi()),
+        provideHttpClientTesting()
       ]
     }).compileComponents()
   })
@@ -134,7 +142,7 @@ describe('AiContextSearchComponent', () => {
     fixture = TestBed.createComponent(AiContextSearchComponent)
     component = fixture.componentInstance
     fixture.detectChanges()
-    aiContextSearch = await TestbedHarnessEnvironment.harnessForFixture(fixture, AiContextSearchHarness)
+    AiContextSearch = await TestbedHarnessEnvironment.harnessForFixture(fixture, AiContextSearchHarness)
   })
 
   it('should create the component', () => {
@@ -166,13 +174,13 @@ describe('AiContextSearchComponent', () => {
       doneFn()
     })
 
-    const searchHeader = await aiContextSearch.getHeader()
+    const searchHeader = await AiContextSearch.getHeader()
     await searchHeader.clickResetButton()
     expect(doneFn).toHaveBeenCalledTimes(1)
   })
 
   it('should have 2 overFlow header actions when search config is disabled', async () => {
-    const searchHeader = await aiContextSearch.getHeader()
+    const searchHeader = await AiContextSearch.getHeader()
     const pageHeader = await searchHeader.getPageHeader()
     const overflowActionButton = await pageHeader.getOverflowActionMenuButton()
     await overflowActionButton?.click()
@@ -194,7 +202,7 @@ describe('AiContextSearchComponent', () => {
     })
     store.refreshState()
 
-    const searchHeader = await aiContextSearch.getHeader()
+    const searchHeader = await AiContextSearch.getHeader()
     const pageHeader = await searchHeader.getPageHeader()
     const overflowActionButton = await pageHeader.getOverflowActionMenuButton()
     await overflowActionButton?.click()
@@ -238,7 +246,7 @@ describe('AiContextSearchComponent', () => {
     })
     store.refreshState()
 
-    const diagram = await (await aiContextSearch.getDiagram())!.getDiagram()
+    const diagram = await (await AiContextSearch.getDiagram())!.getDiagram()
 
     expect(await diagram.getTotalNumberOfResults()).toBe(3)
     expect(await diagram.getSumLabel()).toEqual('Total')
@@ -252,7 +260,7 @@ describe('AiContextSearchComponent', () => {
     fixture.detectChanges()
 
     expect(breadcrumbService.setItems).toHaveBeenCalledTimes(1)
-    const searchHeader = await aiContextSearch.getHeader()
+    const searchHeader = await AiContextSearch.getHeader()
     const pageHeader = await searchHeader.getPageHeader()
     const searchBreadcrumbItem = await pageHeader.getBreadcrumbItem('Search')
 
@@ -273,18 +281,290 @@ describe('AiContextSearchComponent', () => {
     component.search(formValue)
   })
 
+  it('should dispatch editAiContextButtonClicked action on item edit click', async () => {
+    jest.spyOn(store, 'dispatch')
+
+    store.overrideSelector(selectAiContextSearchViewModel, {
+      ...baseAiContextSearchViewModel,
+      results: [
+        {
+          id: '1',
+          imagePath: '',
+          column_1: 'val_1'
+        }
+      ],
+      columns: [
+        {
+          columnType: ColumnType.STRING,
+          nameKey: 'COLUMN_KEY',
+          id: 'column_1'
+        }
+      ]
+    })
+    store.refreshState()
+
+    const interactiveDataView = await AiContextSearch.getSearchResults()
+    const dataView = await interactiveDataView.getDataView()
+    const dataTable = await dataView.getDataTable()
+    const rowActionButtons = await dataTable?.getActionButtons()
+
+    expect(rowActionButtons?.length).toBeGreaterThan(0)
+    let editButton
+    for (const actionButton of rowActionButtons ?? []) {
+      const icon = await actionButton.getAttribute('ng-reflect-icon')
+      expect(icon).toBeTruthy()
+      if (icon == 'pi pi-pencil') {
+        editButton = actionButton
+      }
+    }
+    expect(editButton).toBeTruthy()
+    editButton?.click()
+
+    expect(store.dispatch).toHaveBeenCalledWith(AiContextSearchActions.editAiContextButtonClicked({ id: '1' }))
+  })
+
+  it('should dispatch aiKnowledgeVectorDetailsClicked on on item delete click', async () => {
+    jest.spyOn(store, 'dispatch')
+
+    store.overrideSelector(selectAiContextSearchViewModel, {
+      ...baseAiContextSearchViewModel,
+      results: [
+        {
+          id: '1',
+          imagePath: '',
+          column_1: 'val_1'
+        }
+      ],
+      columns: [
+        {
+          columnType: ColumnType.STRING,
+          nameKey: 'COLUMN_KEY',
+          id: 'column_1'
+        }
+      ]
+    })
+    store.refreshState()
+
+    const interactiveDataView = await AiContextSearch.getSearchResults()
+    const dataView = await interactiveDataView.getDataView()
+    const dataTable = await dataView.getDataTable()
+    const rowActionButtons = await dataTable?.getActionButtons()
+
+    expect(rowActionButtons?.length).toBeGreaterThan(0)
+    let deleteButton
+    for (const actionButton of rowActionButtons ?? []) {
+      const icon = await actionButton.getAttribute('ng-reflect-icon')
+      expect(icon).toBeTruthy()
+      if (icon == PrimeIcons.TRASH) {
+        deleteButton = actionButton
+      }
+    }
+    expect(deleteButton).toBeTruthy()
+    deleteButton?.click()
+
+    expect(store.dispatch).toHaveBeenCalledWith(AiContextSearchActions.deleteAiContextButtonClicked({ id: '1' }))
+  })
+
+  it('should dispatch createAiContextButtonClicked action on create click', async () => {
+    jest.spyOn(store, 'dispatch')
+
+    const header = await AiContextSearch.getHeader()
+    const createButton = await (await header.getPageHeader()).getInlineActionButtonByIcon(PrimeIcons.PLUS)
+
+    expect(createButton).toBeTruthy()
+    await createButton?.click()
+
+    expect(store.dispatch).toHaveBeenCalledWith(AiContextSearchActions.createAiContextButtonClicked())
+  })
+
+  it('should dispatch detailsButtonClicked action on details', () => {
+    jest.spyOn(store, 'dispatch')
+    const row: RowListGridData = { id: 'test-id', imagePath: '' }
+    component.details(row)
+    expect(store.dispatch).toHaveBeenCalledWith(AiContextSearchActions.detailsButtonClicked({ id: 'test-id' }))
+  })
+
+  it('should convert Date values to UTC and dispatch searchButtonClicked with correct searchCriteria', () => {
+    jest.spyOn(store, 'dispatch')
+    const formValue = {
+      appId: 'appId',
+      name: 'testName',
+      description: 'testDescription'
+    }
+    component.aiContextSearchFormGroup = {
+      value: formValue,
+      getRawValue: () => formValue
+    } as any
+
+    component.search(component.aiContextSearchFormGroup)
+
+    expect(store.dispatch).toHaveBeenCalledWith(
+      AiContextSearchActions.searchButtonClicked({
+        searchCriteria: {
+          appId: 'appId',
+          name: 'testName',
+          description: 'testDescription'
+        }
+      })
+    )
+  })
+  it('should pass through non-date, non-empty values unchanged in searchCriteria', () => {
+    jest.spyOn(store, 'dispatch')
+    const formValue = {
+      name: 'testName' // not a Date, not empty
+    }
+    component.aiContextSearchFormGroup = {
+      value: formValue,
+      getRawValue: () => formValue
+    } as any
+
+    component.search(component.aiContextSearchFormGroup)
+
+    expect(store.dispatch).toHaveBeenCalledWith(
+      AiContextSearchActions.searchButtonClicked({
+        searchCriteria: {
+          name: 'testName'
+        }
+      })
+    )
+  })
+
+  it('should set searchCriteria property to undefined for falsy non-date values', () => {
+    jest.spyOn(store, 'dispatch')
+    const formValue = {
+      name: '' // not a Date, falsy value
+    }
+    component.aiContextSearchFormGroup = {
+      value: formValue,
+      getRawValue: () => formValue
+    } as any
+
+    component.search(component.aiContextSearchFormGroup)
+
+    expect(store.dispatch).toHaveBeenCalledWith(
+      AiContextSearchActions.searchButtonClicked({
+        searchCriteria: {
+          name: undefined
+        }
+      })
+    )
+  })
+
+  it('should handle isValidDate true branch for allowed key (using as any for coverage)', () => {
+    jest.spyOn(store, 'dispatch')
+    const testDate = new Date(2024, 4, 15, 12, 30, 45)
+    const formValue = {
+      appId: testDate as any // force for coverage only
+    }
+    component.aiContextSearchFormGroup = {
+      value: formValue,
+      getRawValue: () => formValue
+    } as any
+
+    component.search(component.aiContextSearchFormGroup)
+
+    expect(store.dispatch).toHaveBeenCalledWith(
+      AiContextSearchActions.searchButtonClicked({
+        searchCriteria: {
+          appId: new Date(
+            Date.UTC(
+              testDate.getFullYear(),
+              testDate.getMonth(),
+              testDate.getDate(),
+              testDate.getHours(),
+              testDate.getMinutes(),
+              testDate.getSeconds()
+            )
+          ) as any // force for coverage only
+        }
+      })
+    )
+  })
+
+  it('should pass through non-date, non-empty values unchanged in searchCriteria', () => {
+    jest.spyOn(store, 'dispatch')
+    const formValue = {
+      name: 'testName'
+    }
+    component.aiContextSearchFormGroup = {
+      value: formValue,
+      getRawValue: () => formValue
+    } as any
+
+    component.search(component.aiContextSearchFormGroup)
+
+    expect(store.dispatch).toHaveBeenCalledWith(
+      AiContextSearchActions.searchButtonClicked({
+        searchCriteria: {
+          name: 'testName'
+        }
+      })
+    )
+  })
+
+  it('should set searchCriteria property to undefined for falsy non-date values', () => {
+    jest.spyOn(store, 'dispatch')
+    const formValue = {
+      name: ''
+    }
+    component.aiContextSearchFormGroup = {
+      value: formValue,
+      getRawValue: () => formValue
+    } as any
+
+    component.search(component.aiContextSearchFormGroup)
+
+    expect(store.dispatch).toHaveBeenCalledWith(
+      AiContextSearchActions.searchButtonClicked({
+        searchCriteria: {
+          name: undefined
+        }
+      })
+    )
+  })
+
+  it('should export csv data on export action click', async () => {
+    jest.spyOn(store, 'dispatch')
+
+    const results = [
+      {
+        id: '1',
+        imagePath: '',
+        column_1: 'val_1'
+      }
+    ]
+    const columns = [
+      {
+        columnType: ColumnType.STRING,
+        nameKey: 'COLUMN_KEY',
+        id: 'column_1'
+      }
+    ]
+    store.overrideSelector(selectAiContextSearchViewModel, {
+      ...baseAiContextSearchViewModel,
+      results: results,
+      columns: columns,
+      displayedColumns: columns
+    })
+    store.refreshState()
+
+    const searchHeader = await AiContextSearch.getHeader()
+    const pageHeader = await searchHeader.getPageHeader()
+    const overflowActionButton = await pageHeader.getOverflowActionMenuButton()
+    await overflowActionButton?.click()
+
+    const exportAllActionItem = await pageHeader.getOverFlowMenuItem('Export all')
+    await exportAllActionItem!.selectItem()
+
+    expect(store.dispatch).toHaveBeenCalledWith(AiContextSearchActions.exportButtonClicked())
+  })
+
   it('should dispatch viewModeChanged action on view mode changes', async () => {
     jest.spyOn(store, 'dispatch')
 
-    component.searchHeaderComponentStateChanged({
-      activeViewMode: 'advanced'
-    })
+    component.viewModeChanged('advanced')
 
-    expect(store.dispatch).toHaveBeenCalledWith(
-      AiContextSearchActions.searchHeaderComponentStateChanged({
-        activeViewMode: 'advanced'
-      })
-    )
+    expect(store.dispatch).toHaveBeenCalledWith(AiContextSearchActions.viewModeChanged({ viewMode: 'advanced' }))
   })
 
   it('should dispatch displayedColumnsChanged on data view column change', async () => {
@@ -293,7 +573,7 @@ describe('AiContextSearchComponent', () => {
     fixture = TestBed.createComponent(AiContextSearchComponent)
     component = fixture.componentInstance
     fixture.detectChanges()
-    aiContextSearch = await TestbedHarnessEnvironment.harnessForFixture(fixture, AiContextSearchHarness)
+    AiContextSearch = await TestbedHarnessEnvironment.harnessForFixture(fixture, AiContextSearchHarness)
 
     expect(store.dispatch).toHaveBeenCalledWith(
       AiContextSearchActions.displayedColumnsChanged({ displayedColumns: aiContextSearchColumns })
@@ -318,7 +598,7 @@ describe('AiContextSearchComponent', () => {
     })
     store.refreshState()
 
-    const interactiveDataView = await aiContextSearch.getSearchResults()
+    const interactiveDataView = await AiContextSearch.getSearchResults()
     const columnGroupSelector = await interactiveDataView?.getCustomGroupColumnSelector()
     expect(columnGroupSelector).toBeTruthy()
     await columnGroupSelector!.openCustomGroupColumnSelectorDialog()
@@ -357,7 +637,7 @@ describe('AiContextSearchComponent', () => {
     })
     store.refreshState()
 
-    const searchHeader = await aiContextSearch.getHeader()
+    const searchHeader = await AiContextSearch.getHeader()
     const pageHeader = await searchHeader.getPageHeader()
     const overflowActionButton = await pageHeader.getOverflowActionMenuButton()
     await overflowActionButton?.click()
@@ -368,7 +648,7 @@ describe('AiContextSearchComponent', () => {
   })
 
   it('should display translated headers', async () => {
-    const searchHeader = await aiContextSearch.getHeader()
+    const searchHeader = await AiContextSearch.getHeader()
     const pageHeader = await searchHeader.getPageHeader()
     expect(await pageHeader.getHeaderText()).toEqual('AiContext Search')
     expect(await pageHeader.getSubheaderText()).toEqual('Searching and displaying of AiContext')
@@ -390,7 +670,7 @@ describe('AiContextSearchComponent', () => {
     })
     store.refreshState()
 
-    const interactiveDataView = await aiContextSearch.getSearchResults()
+    const interactiveDataView = await AiContextSearch.getSearchResults()
     const dataView = await interactiveDataView.getDataView()
     const dataTable = await dataView.getDataTable()
     const rows = await dataTable?.getRows()
@@ -418,7 +698,7 @@ describe('AiContextSearchComponent', () => {
     })
     store.refreshState()
 
-    let diagram = await aiContextSearch.getDiagram()
+    let diagram = await AiContextSearch.getDiagram()
     expect(diagram).toBeNull()
 
     store.overrideSelector(selectAiContextSearchViewModel, {
@@ -441,7 +721,7 @@ describe('AiContextSearchComponent', () => {
     })
     store.refreshState()
 
-    diagram = await aiContextSearch.getDiagram()
+    diagram = await AiContextSearch.getDiagram()
     expect(diagram).toBeNull()
 
     store.overrideSelector(selectAiContextSearchViewModel, {
@@ -464,43 +744,163 @@ describe('AiContextSearchComponent', () => {
     })
     store.refreshState()
 
-    diagram = await aiContextSearch.getDiagram()
+    diagram = await AiContextSearch.getDiagram()
     expect(diagram).toBeTruthy()
   })
 
-  it('should dispatch export csv data on export action click', async () => {
-    jest.spyOn(store, 'dispatch')
+  describe('AiContextSearchReducer', () => {
+    const { aiContextSearchReducer, initialState } = require('./ai-context-search.reducers')
+    const { AiContextSearchActions } = require('./ai-context-search.actions')
 
-    const results = [
-      {
-        id: '1',
-        imagePath: '',
-        column_1: 'val_1'
-      }
-    ]
-    const columns = [
-      {
-        columnType: ColumnType.STRING,
-        nameKey: 'COLUMN_KEY',
-        id: 'column_1'
-      }
-    ]
-    store.overrideSelector(selectAiContextSearchViewModel, {
-      ...baseAiContextSearchViewModel,
-      results: results,
-      columns: columns,
-      displayedColumns: columns
+    it('should reset results and criteria on resetButtonClicked', () => {
+      const preState = { ...initialState, results: [{ id: '1' }], criteria: { test: 'val' } }
+      const action = AiContextSearchActions.resetButtonClicked()
+      const state = aiContextSearchReducer(preState, action)
+      expect(state.results).toEqual([])
+      expect(state.criteria).toEqual({})
     })
-    store.refreshState()
 
-    const searchHeader = await aiContextSearch.getHeader()
-    const pageHeader = await searchHeader.getPageHeader()
-    const overflowActionButton = await pageHeader.getOverflowActionMenuButton()
-    await overflowActionButton?.click()
+    it('should set searchLoadingIndicator and criteria on searchButtonClicked', () => {
+      const searchCriteria = { name: 'foo' }
+      const action = AiContextSearchActions.searchButtonClicked({ searchCriteria })
+      const state = aiContextSearchReducer(initialState, action)
+      expect(state.searchLoadingIndicator).toBe(true)
+      expect(state.criteria).toEqual(searchCriteria)
+    })
 
-    const exportAllActionItem = await pageHeader.getOverFlowMenuItem('Export all')
-    await exportAllActionItem!.selectItem()
+    it('should set results on aiContextSearchResultsReceived', () => {
+      const stream = [{ id: '1' }, { id: '2' }]
+      const action = AiContextSearchActions.aiContextSearchResultsReceived({ stream })
+      const state = aiContextSearchReducer(initialState, action)
+      expect(state.results).toEqual(stream)
+    })
 
-    expect(store.dispatch).toHaveBeenCalledWith(AiContextSearchActions.exportButtonClicked())
+    it('should clear results on aiContextSearchResultsLoadingFailed', () => {
+      const preState = { ...initialState, results: [{ id: '1' }] }
+      const action = AiContextSearchActions.aiContextSearchResultsLoadingFailed()
+      const state = aiContextSearchReducer(preState, action)
+      expect(state.results).toEqual([])
+    })
+
+    it('should set viewMode on viewModeChanged', () => {
+      const action = AiContextSearchActions.viewModeChanged({ viewMode: 'advanced' })
+      const state = aiContextSearchReducer(initialState, action)
+      expect(state.viewMode).toBe('advanced')
+    })
+
+    it('should set displayedColumns on displayedColumnsChanged', () => {
+      const displayedColumns = [{ id: 'col1' }, { id: 'col2' }]
+      const action = AiContextSearchActions.displayedColumnsChanged({ displayedColumns })
+      const state = aiContextSearchReducer(initialState, action)
+      expect(state.displayedColumns).toEqual(['col1', 'col2'])
+    })
+
+    it('should set criteria and searchLoadingIndicator=true when routerNavigatedAction succeeds and queryParams present', () => {
+      const { routerNavigatedAction } = require('@ngrx/router-store')
+      // Mock the schema to always succeed
+      const mockSchema = require('./ai-context-search.parameters')
+      jest.spyOn(mockSchema.aiContextSearchCriteriasSchema, 'safeParse').mockReturnValue({
+        success: true,
+        data: { foo: 'bar' }
+      })
+      const preState = { ...initialState, criteria: {}, searchLoadingIndicator: false }
+      const action = routerNavigatedAction({ payload: { routerState: { root: { queryParams: { foo: 'bar' } } } } })
+      const state = aiContextSearchReducer(preState, action)
+      expect(state.criteria).toEqual({ foo: 'bar' })
+      expect(state.searchLoadingIndicator).toBe(true)
+    })
+
+    it('should not change state when routerNavigatedAction fails schema parse', () => {
+      const { routerNavigatedAction } = require('@ngrx/router-store')
+      // Mock the schema to always fail
+      const mockSchema = require('./ai-context-search.parameters')
+      jest.spyOn(mockSchema.aiContextSearchCriteriasSchema, 'safeParse').mockReturnValue({
+        success: false
+      })
+      const preState = { ...initialState, criteria: { foo: 'bar' }, searchLoadingIndicator: true }
+      const action = routerNavigatedAction({ payload: { routerState: { root: { queryParams: { foo: 'bar' } } } } })
+      const state = aiContextSearchReducer(preState, action)
+      expect(state).toBe(preState) // unchanged
+    })
+  })
+
+  describe('AiContextSearch selectors', () => {
+    it('selectResults should map results to RowListGridData[]', () => {
+      const state = {
+        ...initialState,
+        results: [
+          { id: '1', name: 'A', description: 'desc', vdb: 'vdb1', vdbCollection: 'c1' },
+          { id: '2', name: 'B', description: 'desc2', vdb: 'vdb2', vdbCollection: 'c2' }
+        ]
+      }
+      const result = selectors.selectResults.projector(state.results)
+      expect(result).toEqual([
+        { imagePath: '', id: '1', name: 'A', description: 'desc', vdb: 'vdb1', vdbCollection: 'c1' },
+        { imagePath: '', id: '2', name: 'B', description: 'desc2', vdb: 'vdb2', vdbCollection: 'c2' }
+      ])
+    })
+
+    it('selectDisplayedColumns should map displayedColumns ids to columns', () => {
+      const columns = [
+        { id: 'col1', nameKey: 'Col 1', columnType: ColumnType.STRING },
+        { id: 'col2', nameKey: 'Col 2', columnType: ColumnType.STRING }
+      ]
+      const displayedColumns = ['col2', 'col1']
+      const result = selectors.selectDisplayedColumns.projector(columns, displayedColumns)
+      expect(result).toEqual([
+        { id: 'col2', nameKey: 'Col 2', columnType: ColumnType.STRING },
+        { id: 'col1', nameKey: 'Col 1', columnType: ColumnType.STRING }
+      ])
+    })
+
+    it('selectAiContextSearchViewModel should combine all selector results', () => {
+      const columns = [{ id: 'col1', nameKey: 'Col 1', columnType: ColumnType.STRING }]
+      const searchCriteria = {
+        name: 'Test Name',
+        description: 'Test Description',
+        vdb: 'vdb1',
+        vdbCollection: 'collection1',
+        id: 1,
+        limit: 10
+      }
+      const results = [{ imagePath: '', id: '1', name: 'A', description: 'desc', vdb: 'vdb1', vdbCollection: 'c1' }]
+      const displayedColumns = [{ id: 'col1', nameKey: 'Col 1', columnType: ColumnType.STRING }]
+      const chartVisible = true
+
+      const result = selectors.selectAiContextSearchViewModel.projector(
+        columns,
+        searchCriteria,
+        results,
+        displayedColumns,
+        null,
+        null,
+        null,
+        chartVisible,
+        false,
+        true
+      )
+      expect(result).toEqual({
+        columns,
+        searchCriteria,
+        results,
+        displayedColumns,
+        resultComponentState: null,
+        searchHeaderComponentState: null,
+        diagramComponentState: null,
+        chartVisible,
+        searchLoadingIndicator: false,
+        searchExecuted: true
+      })
+    })
+
+    it('selectDisplayedColumns should return [] if displayedColumns is undefined', () => {
+      const columns = [
+        { id: 'col1', nameKey: 'Col 1', columnType: ColumnType.STRING },
+        { id: 'col2', nameKey: 'Col 2', columnType: ColumnType.STRING }
+      ]
+      const displayedColumns = null
+      const result = selectors.selectDisplayedColumns.projector(columns, displayedColumns)
+      expect(result).toEqual([])
+    })
   })
 })

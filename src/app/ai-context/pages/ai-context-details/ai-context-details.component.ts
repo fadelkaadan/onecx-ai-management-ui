@@ -182,9 +182,9 @@ export class AiContextDetailsComponent implements OnInit {
       appId: new FormControl('', [Validators.required]),
       name: new FormControl('', [Validators.required]),
       description: new FormControl(''),
-      AIKnowledgeBase: new FormControl(null),
-      provider: new FormControl(null),
-      aIKnowledgeVectorDb: new FormControl(null),
+      AIKnowledgeBase: new FormControl(undefined),
+      provider: new FormControl(undefined),
+      aIKnowledgeVectorDb: new FormControl(undefined),
       aIKnowledgeUrl: new FormControl([]),
       aIKnowledgeDbs: new FormControl([]),
       aIKnowledgeDocuments: new FormControl([])
@@ -194,9 +194,10 @@ export class AiContextDetailsComponent implements OnInit {
     this.viewModel$.subscribe((vm) => {
       if (!vm.editMode) {
         this.formGroup.patchValue({
-          appId: vm.details?.appId,
-          name: vm.details?.name,
-          description: vm.details?.description,
+          id: vm.details?.id || '',
+          appId: vm.details?.appId || '',
+          name: vm.details?.name || '',
+          description: vm.details?.description || '',
           AIKnowledgeBase: vm.details?.AIKnowledgeBase,
           provider: vm.details?.provider,
           aIKnowledgeVectorDb: vm.details?.aIKnowledgeVectorDb,
@@ -236,6 +237,10 @@ export class AiContextDetailsComponent implements OnInit {
   searchVectorDbs(event: { query: string }) {
     this.vectorDbQuery$.next(event.query)
   }
+
+  // getContextFormValue(contexts: AIContext[]) {
+  //   return contexts.map((context) => ({ label: `${context.id}:${context.name}`, value: context }))
+  // }
 
   edit() {
     this.store.dispatch(AiContextDetailsActions.editButtonClicked())

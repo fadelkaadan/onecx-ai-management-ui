@@ -153,6 +153,14 @@ export class AiContextSearchComponent implements OnInit {
     this.store.dispatch(AiContextSearchActions.exportButtonClicked())
   }
 
+  viewModeChanged(viewMode: 'basic' | 'advanced') {
+    this.store.dispatch(
+      AiContextSearchActions.viewModeChanged({
+        viewMode: viewMode
+      })
+    )
+  }
+
   onDisplayedColumnsChange(displayedColumns: DataTableColumn[]) {
     this.store.dispatch(AiContextSearchActions.displayedColumnsChanged({ displayedColumns }))
   }

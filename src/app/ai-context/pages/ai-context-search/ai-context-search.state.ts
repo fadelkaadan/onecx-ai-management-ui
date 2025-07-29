@@ -11,6 +11,7 @@ export interface AiContextSearchState {
   columns: DataTableColumn[]
   results: AIContext[]
   displayedColumns: string[] | null
+  viewMode: 'basic' | 'advanced'
   chartVisible: boolean
   resultComponentState: InteractiveDataViewComponentState | null
   searchHeaderComponentState: SearchHeaderComponentState | null

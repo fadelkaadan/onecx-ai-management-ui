@@ -55,6 +55,9 @@ export const AiContextSearchActions = createActionGroup({
     'Search header component state changed': props<SearchHeaderComponentState>(),
     'Diagram component state changed': props<GroupByCountDiagramComponentState>(),
     'Chart visibility toggled': emptyProps(),
+    'View mode changed': props<{
+      viewMode: 'basic' | 'advanced'
+    }>(),
     'Displayed columns changed': props<{
       displayedColumns: DataTableColumn[]
     }>()

@@ -10,6 +10,7 @@ export const initialState: AiContextSearchState = {
   results: [],
   displayedColumns: null,
   chartVisible: false,
+  viewMode: 'basic',
   resultComponentState: null,
   searchHeaderComponentState: null,
   diagramComponentState: null,
@@ -44,6 +45,7 @@ export const aiContextSearchReducer = createReducer(
     AiContextSearchActions.searchButtonClicked,
     (state: AiContextSearchState, { searchCriteria }): AiContextSearchState => ({
       ...state,
+      searchLoadingIndicator: true,
       criteria: searchCriteria
     })
   ),
@@ -90,6 +92,13 @@ export const aiContextSearchReducer = createReducer(
     (state: AiContextSearchState, diagramComponentState): AiContextSearchState => ({
       ...state,
       diagramComponentState
+    })
+  ),
+  on(
+    AiContextSearchActions.viewModeChanged,
+    (state: AiContextSearchState, { viewMode }): AiContextSearchState => ({
+      ...state,
+      viewMode: viewMode
     })
   ),
   on(

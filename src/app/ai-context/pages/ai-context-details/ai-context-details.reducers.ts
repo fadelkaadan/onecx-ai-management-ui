@@ -102,7 +102,6 @@ export const aiContextDetailsReducer = createReducer(
     AiContextDetailsActions.navigateBackButtonClicked,
     (state: AiContextDetailsState): AiContextDetailsState => ({
       ...state,
-      isSubmitting: true
     })
   ),
   on(
