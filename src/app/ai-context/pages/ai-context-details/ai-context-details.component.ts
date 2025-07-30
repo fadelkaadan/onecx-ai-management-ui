@@ -238,10 +238,6 @@ export class AiContextDetailsComponent implements OnInit {
     this.vectorDbQuery$.next(event.query)
   }
 
-  // getContextFormValue(contexts: AIContext[]) {
-  //   return contexts.map((context) => ({ label: `${context.id}:${context.name}`, value: context }))
-  // }
-
   edit() {
     this.store.dispatch(AiContextDetailsActions.editButtonClicked())
   }

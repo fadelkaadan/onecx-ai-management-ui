@@ -1433,6 +1433,44 @@ describe('AiContextDetailsComponent', () => {
       })
     })
 
+    describe('AiContextDetails autocomplete search methods', () => {
+      it('should update knowledgeBaseQuery$ when searchKnowledgeBases is called', (done) => {
+        const searchQuery = 'test query'
+        const searchEvent = { query: searchQuery }
+
+        component.knowledgeBaseQuery$.subscribe((query) => {
+          expect(query).toBe(searchQuery)
+          done()
+        })
+
+        component.searchKnowledgeBases(searchEvent)
+      })
+
+      it('should update providerQuery$ when searchProviders is called', (done) => {
+        const searchQuery = 'provider search'
+        const searchEvent = { query: searchQuery }
+
+        component.providerQuery$.subscribe((query) => {
+          expect(query).toBe(searchQuery)
+          done()
+        })
+
+        component.searchProviders(searchEvent)
+      })
+
+      it('should update vectorDbQuery$ when searchVectorDbs is called', (done) => {
+        const searchQuery = 'vector db search'
+        const searchEvent = { query: searchQuery }
+
+        component.vectorDbQuery$.subscribe((query) => {
+          expect(query).toBe(searchQuery)
+          done()
+        })
+
+        component.searchVectorDbs(searchEvent)
+      })
+    })
+
     describe('AiContextDetails Selectors', () => {
       const baseState: any = {
         details: {},
