@@ -32,10 +32,10 @@ export const AiContextDetailsActions = createActionGroup({
     'ai context aiKnowledgeBases loading failed': props<{ error: string | null }>(),
 
     'ai context aiKnowledgeVectorDbs received': props<{
-      knowledgeVectorDbs: AIKnowledgeVectorDb[]
+      aiKnowledgeVectorDbs: AIKnowledgeVectorDb[]
     }>(),
     'ai context reloaded aiKnowledgeVectorDbs received': props<{
-      knowledgeVectorDbs: AIKnowledgeVectorDb[]
+      aiKnowledgeVectorDbs: AIKnowledgeVectorDb[]
     }>(),
     'ai context aiKnowledgeVectorDbs loading failed': props<{ error: string | null }>(),
 

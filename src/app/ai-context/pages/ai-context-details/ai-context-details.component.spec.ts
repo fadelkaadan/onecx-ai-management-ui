@@ -1334,6 +1334,29 @@ describe('AiContextDetailsComponent', () => {
         expect(state.detailsLoaded).toBe(false)
       })
 
+      it('should handle aiContextProvidersReceived', () => {
+        const providers = [{ id: 'prv1', name: 'Provider 1' }]
+        const action = AiContextDetailsActions.aiContextProvidersReceived({ providers: providers })
+        const state = aiContextDetailsReducer(initialState, action)
+        expect(state.aiProviders).toEqual(providers)
+        expect(state.aiProvidersLoadingIndicator).toBe(false)
+        expect(state.aiProvidersLoaded).toBe(true)
+      })
+
+      it('should handle aiContextProvidersLoadingFailed', () => {
+        const preState: AiContextDetailsState = {
+          ...initialState,
+          aiProviders: [{ id: 'prv2', name: 'Old Provider' }],
+          aiProvidersLoadingIndicator: true,
+          aiProvidersLoaded: true
+        }
+        const action = AiContextDetailsActions.aiContextProvidersLoadingFailed({ error: null })
+        const state = aiContextDetailsReducer(preState, action)
+        expect(state.aiProviders).toEqual(initialState.aiProviders)
+        expect(state.aiProvidersLoadingIndicator).toBe(false)
+        expect(state.aiProvidersLoaded).toBe(false)
+      })
+
       it('should handle aiContextAiKnowledgeBasesReceived', () => {
         const aiknowledgeBases = [{ id: 'ctx1', name: 'Context 1' }]
         const action = AiContextDetailsActions.aiContextAiKnowledgeBasesReceived({ aiKnowledgeBases: aiknowledgeBases })
@@ -1355,6 +1378,29 @@ describe('AiContextDetailsComponent', () => {
         expect(state.aiKnowledgeBases).toEqual(initialState.aiKnowledgeBases)
         expect(state.aiKnowledgeBasesLoadingIndicator).toBe(false)
         expect(state.aiKnowledgeBasesLoaded).toBe(false)
+      })
+
+      it('should handle aiContextAiKnowledgeVectorDbsReceived', () => {
+        const aiKnowledgeVectorDbs = [{ id: 'kvdb1', name: 'KnowledgeVectorDB 1' }]
+        const action = AiContextDetailsActions.aiContextAiKnowledgeVectorDbsReceived({ aiKnowledgeVectorDbs })
+        const state = aiContextDetailsReducer(initialState, action)
+        expect(state.aiKnowledgeVectorDbs).toEqual(aiKnowledgeVectorDbs)
+        expect(state.aiKnowledgeVectorDbsLoadingIndicator).toBe(false)
+        expect(state.aiKnowledgeVectorDbsLoaded).toBe(true)
+      })
+
+      it('should handle aiContextAiKnowledgeVectorDbsLoadingFailed', () => {
+        const preState: AiContextDetailsState = {
+          ...initialState,
+          aiKnowledgeVectorDbs: [{ id: 'kvdb2', name: 'Old KnowledgeVectorDB' }],
+          aiKnowledgeVectorDbsLoadingIndicator: true,
+          aiKnowledgeVectorDbsLoaded: true
+        }
+        const action = AiContextDetailsActions.aiContextAiKnowledgeVectorDbsLoadingFailed({ error: null })
+        const state = aiContextDetailsReducer(preState, action)
+        expect(state.aiKnowledgeVectorDbs).toEqual(initialState.aiKnowledgeVectorDbs)
+        expect(state.aiKnowledgeVectorDbsLoadingIndicator).toBe(false)
+        expect(state.aiKnowledgeVectorDbsLoaded).toBe(false)
       })
 
       it('should handle navigatedToDetailsPage', () => {

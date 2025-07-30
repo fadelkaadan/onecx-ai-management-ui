@@ -28,7 +28,7 @@ export const aiContextDetailsReducer = createReducer(
       ...state,
       details,
       detailsLoadingIndicator: false,
-      detailsLoaded: true,
+      detailsLoaded: true
     })
   ),
   on(
@@ -37,7 +37,7 @@ export const aiContextDetailsReducer = createReducer(
       ...state,
       details: undefined,
       detailsLoadingIndicator: false,
-      detailsLoaded: false,
+      detailsLoaded: false
     })
   ),
   on(
@@ -77,6 +77,24 @@ export const aiContextDetailsReducer = createReducer(
     })
   ),
   on(
+    AiContextDetailsActions.aiContextAiKnowledgeVectorDbsReceived,
+    (state: AiContextDetailsState, { aiKnowledgeVectorDbs }): AiContextDetailsState => ({
+      ...state,
+      aiKnowledgeVectorDbs,
+      aiKnowledgeVectorDbsLoadingIndicator: false,
+      aiKnowledgeVectorDbsLoaded: true
+    })
+  ),
+  on(
+    AiContextDetailsActions.aiContextAiKnowledgeVectorDbsLoadingFailed,
+    (state: AiContextDetailsState): AiContextDetailsState => ({
+      ...state,
+      aiKnowledgeVectorDbs: [],
+      aiKnowledgeVectorDbsLoadingIndicator: false,
+      aiKnowledgeVectorDbsLoaded: false
+    })
+  ),
+  on(
     AiContextDetailsActions.navigatedToDetailsPage,
     (): AiContextDetailsState => ({
       ...initialState
@@ -86,7 +104,7 @@ export const aiContextDetailsReducer = createReducer(
     AiContextDetailsActions.editButtonClicked,
     (state: AiContextDetailsState): AiContextDetailsState => ({
       ...state,
-      editMode: true,
+      editMode: true
     })
   ),
   on(
@@ -101,7 +119,7 @@ export const aiContextDetailsReducer = createReducer(
   on(
     AiContextDetailsActions.navigateBackButtonClicked,
     (state: AiContextDetailsState): AiContextDetailsState => ({
-      ...state,
+      ...state
     })
   ),
   on(

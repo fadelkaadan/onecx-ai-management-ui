@@ -127,7 +127,7 @@ export class AiContextDetailsEffects {
         return this.aiKnowledgeVectorDB.searchAIKnowledgeVectorDbs(fetchAllReq).pipe(
           map(({ results }) =>
             AiContextDetailsActions.aiContextAiKnowledgeVectorDbsReceived({
-              knowledgeVectorDbs: results
+              aiKnowledgeVectorDbs: results
             })
           ),
           catchError((error) =>
