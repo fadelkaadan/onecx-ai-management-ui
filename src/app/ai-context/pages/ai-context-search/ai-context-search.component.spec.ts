@@ -782,6 +782,58 @@ describe('AiContextSearchComponent', () => {
       expect(state.results).toEqual([])
     })
 
+    it('should toggle chartVisible on chartVisibilityToggled', () => {
+      const initialStateWithChartHidden = { ...initialState, chartVisible: false }
+      const action = AiContextSearchActions.chartVisibilityToggled()
+      let state = aiContextSearchReducer(initialStateWithChartHidden, action)
+      expect(state.chartVisible).toBe(true)
+
+      const stateWithChartVisible = { ...initialState, chartVisible: true }
+      state = aiContextSearchReducer(stateWithChartVisible, action)
+      expect(state.chartVisible).toBe(false)
+    })
+
+    it('should update resultComponentState when resultComponentStateChanged', () => {
+      const newComponentState = {
+        groupKey: 'someValue'
+      }
+
+      const action = AiContextSearchActions.resultComponentStateChanged(newComponentState)
+      const state = aiContextSearchReducer(initialState, action)
+
+      expect(state.resultComponentState).toBeDefined()
+      expect(state.resultComponentState.groupKey).toBe('someValue')
+      expect(state).not.toBe(initialState)
+    })
+
+    it('should update searchHeaderComponentState when searchHeaderComponentStateChanged', () => {
+      const newHeaderState = {
+        activeViewMode: 'basic',
+        selectedSearchConfig: 'config1'
+      }
+
+      const action = AiContextSearchActions.searchHeaderComponentStateChanged(newHeaderState)
+      const state = aiContextSearchReducer(initialState, action)
+
+      expect(state.searchHeaderComponentState).toBeDefined()
+      expect(state.searchHeaderComponentState.activeViewMode).toBe('basic')
+      expect(state.searchHeaderComponentState.selectedSearchConfig).toBe('config1')
+      expect(state).not.toBe(initialState)
+    })
+
+    it('should update diagramComponentState when diagramComponentStateChanged', () => {
+      const newDiagramState = {
+        activeDiagramType: 'PIE'
+      }
+
+      const action = AiContextSearchActions.diagramComponentStateChanged(newDiagramState)
+      const state = aiContextSearchReducer(initialState, action)
+
+      expect(state.diagramComponentState).toBeDefined()
+      expect(state.diagramComponentState.activeDiagramType).toBe('PIE')
+      expect(state).not.toBe(initialState)
+    })
+
     it('should set viewMode on viewModeChanged', () => {
       const action = AiContextSearchActions.viewModeChanged({ viewMode: 'advanced' })
       const state = aiContextSearchReducer(initialState, action)
