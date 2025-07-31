@@ -13,8 +13,11 @@ import { TranslateService } from '@ngx-translate/core'
 import {
   BreadcrumbService,
   ColumnType,
+  DiagramComponentState,
+  InteractiveDataViewComponentState,
   PortalCoreModule,
   RowListGridData,
+  SearchHeaderComponentState,
   UserService
 } from '@onecx/portal-integration-angular'
 import { TranslateTestingModule } from 'ngx-translate-testing'
@@ -92,8 +95,8 @@ describe('AiContextSearchComponent', () => {
         matches: false,
         media: query,
         onchange: null,
-        addListener: jest.fn(), // Deprecated
-        removeListener: jest.fn(), // Deprecated
+        addListener: jest.fn(),
+        removeListener: jest.fn(),
         addEventListener: jest.fn(),
         removeEventListener: jest.fn(),
         dispatchEvent: jest.fn()
@@ -411,7 +414,7 @@ describe('AiContextSearchComponent', () => {
   it('should pass through non-date, non-empty values unchanged in searchCriteria', () => {
     jest.spyOn(store, 'dispatch')
     const formValue = {
-      name: 'testName' // not a Date, not empty
+      name: 'testName'
     }
     component.aiContextSearchFormGroup = {
       value: formValue,
@@ -432,7 +435,7 @@ describe('AiContextSearchComponent', () => {
   it('should set searchCriteria property to undefined for falsy non-date values', () => {
     jest.spyOn(store, 'dispatch')
     const formValue = {
-      name: '' // not a Date, falsy value
+      name: ''
     }
     component.aiContextSearchFormGroup = {
       value: formValue,
@@ -454,7 +457,7 @@ describe('AiContextSearchComponent', () => {
     jest.spyOn(store, 'dispatch')
     const testDate = new Date(2024, 4, 15, 12, 30, 45)
     const formValue = {
-      appId: testDate as any // force for coverage only
+      appId: testDate as any
     }
     component.aiContextSearchFormGroup = {
       value: formValue,
@@ -475,7 +478,7 @@ describe('AiContextSearchComponent', () => {
               testDate.getMinutes(),
               testDate.getSeconds()
             )
-          ) as any // force for coverage only
+          ) as any
         }
       })
     )
@@ -748,6 +751,36 @@ describe('AiContextSearchComponent', () => {
     expect(diagram).toBeTruthy()
   })
 
+  it('should dispatch resultComponentStateChanged action when resultComponentStateChanged is called', () => {
+    jest.spyOn(store, 'dispatch')
+    const mockState: InteractiveDataViewComponentState = { groupKey: 'test-group' } as InteractiveDataViewComponentState
+
+    component.resultComponentStateChanged(mockState)
+
+    expect(store.dispatch).toHaveBeenCalledWith(AiContextSearchActions.resultComponentStateChanged(mockState))
+  })
+
+  it('should dispatch searchHeaderComponentStateChanged action when searchHeaderComponentStateChanged is called', () => {
+    jest.spyOn(store, 'dispatch')
+    const mockState: SearchHeaderComponentState = {
+      activeViewMode: 'basic',
+      selectedSearchConfig: 'config1'
+    } as SearchHeaderComponentState
+
+    component.searchHeaderComponentStateChanged(mockState)
+
+    expect(store.dispatch).toHaveBeenCalledWith(AiContextSearchActions.searchHeaderComponentStateChanged(mockState))
+  })
+
+  it('should dispatch diagramComponentStateChanged action when diagramComponentStateChanged is called', () => {
+    jest.spyOn(store, 'dispatch')
+    const mockState: DiagramComponentState = { label: 'Test Diagram' } as DiagramComponentState
+
+    component.diagramComponentStateChanged(mockState)
+
+    expect(store.dispatch).toHaveBeenCalledWith(AiContextSearchActions.diagramComponentStateChanged(mockState))
+  })
+
   describe('AiContextSearchReducer', () => {
     const { aiContextSearchReducer, initialState } = require('./ai-context-search.reducers')
     const { AiContextSearchActions } = require('./ai-context-search.actions')
@@ -889,6 +922,23 @@ describe('AiContextSearchComponent', () => {
       expect(result).toEqual([
         { imagePath: '', id: '1', name: 'A', description: 'desc', vdb: 'vdb1', vdbCollection: 'c1' },
         { imagePath: '', id: '2', name: 'B', description: 'desc2', vdb: 'vdb2', vdbCollection: 'c2' }
+      ])
+    })
+
+    it('selectResults should use empty string fallback when item.id is falsy', () => {
+      const state = {
+        ...initialState,
+        results: [
+          { id: undefined, name: 'A', description: 'desc' },
+          { id: '', name: 'B', description: 'desc2' },
+          { name: 'C', description: 'desc3' }
+        ]
+      }
+      const result = selectors.selectResults.projector(state.results)
+      expect(result).toEqual([
+        { imagePath: '', id: '', name: 'A', description: 'desc' },
+        { imagePath: '', id: '', name: 'B', description: 'desc2' },
+        { imagePath: '', id: '', name: 'C', description: 'desc3' }
       ])
     })
 

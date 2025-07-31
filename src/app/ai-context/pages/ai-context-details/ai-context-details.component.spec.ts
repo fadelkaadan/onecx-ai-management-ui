@@ -23,11 +23,9 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms'
 import {
   AIKnowledgeDocumentStatusEnum,
   AIContextBffService,
-  // SearchAIContextResponse,
   UpdateAIContextResponse,
   GetAIContextByIdResponse,
   AiKnowledgeBaseBffService,
-  // GetAIKnowledgeBaseByIdResponse,
   SearchAIKnowledgeBaseResponse,
   AIProviderBffService,
   AIKnowledgeVectorDbBffService
@@ -566,7 +564,6 @@ describe('AiContextDetailsComponent', () => {
       })
     })
 
-    // TODO: add tests for aiProviders$ and aiKnowledgeVectorDbs$
     describe('searchAIKnowledgeBases$', () => {
       it('should dispatch aiContextDetailsReceived on successful loadItemById$', (done) => {
         const details = { id: '123' }
@@ -1188,6 +1185,66 @@ describe('AiContextDetailsComponent', () => {
       })
     })
 
+    it('should emit correct providersSuggestions$ for details without provider', (done) => {
+      const provider1 = {
+        id: 'id-1',
+        name: 'Provider 1',
+        description: 'Provider 1 description',
+        llmUrl: 'provider1-url',
+        appId: 'provider1-app',
+        modelName: 'provider1-model',
+        modelVersion: '1.0',
+        apiKey: 'provider1-key'
+      }
+
+      const provider2 = {
+        id: 'id-2',
+        name: 'Provider 2',
+        description: 'Provider 2 description',
+        llmUrl: 'provider2-url',
+        appId: 'provider2-app',
+        modelName: 'provider2-model',
+        modelVersion: '2.0',
+        apiKey: 'provider2-key'
+      }
+
+      const details = { ...baseAiContextDetailsViewModel.details, provider: undefined }
+      const viewModel = {
+        ...baseAiContextDetailsViewModel,
+        details,
+        aiProviders: [provider1, provider2]
+      }
+
+      store.overrideSelector(selectAiContextDetailsViewModel, viewModel)
+      store.refreshState()
+      fixture.detectChanges()
+
+      component.providersSuggestions$.subscribe((providers) => {
+        expect(providers.length).toBe(2)
+        expect(providers).toContain(provider1)
+        expect(providers).toContain(provider2)
+        done()
+      })
+    })
+
+    it('should emit empty array for providersSuggestions$ when aiProviders is undefined', (done) => {
+      const details = { ...baseAiContextDetailsViewModel.details, provider: undefined }
+      const viewModel = {
+        ...baseAiContextDetailsViewModel,
+        details,
+        aiProviders: undefined
+      }
+
+      store.overrideSelector(selectAiContextDetailsViewModel, viewModel)
+      store.refreshState()
+      fixture.detectChanges()
+
+      component.providersSuggestions$.subscribe((providers) => {
+        expect(providers).toEqual([])
+        done()
+      })
+    })
+
     it('should emit correct knowledgeBaseSuggestions$ for details with knowledge base', (done) => {
       const selectedKnowledgeBase = {
         id: 'id-1',
@@ -1218,6 +1275,58 @@ describe('AiContextDetailsComponent', () => {
         expect(knowledgeBases.length).toBe(1)
         expect(knowledgeBases[0]).toEqual(otherKnowledgeBase)
         expect(knowledgeBases).not.toContain(selectedKnowledgeBase)
+        done()
+      })
+    })
+
+    it('should emit correct knowledgeBaseSuggestions$ for details without knowledge base', (done) => {
+      const knowledgeBase1 = {
+        id: 'id-1',
+        name: 'Knowledge Base 1',
+        description: 'Knowledge base 1 description',
+        aiContext: []
+      }
+
+      const knowledgeBase2 = {
+        id: 'id-2',
+        name: 'Knowledge Base 2',
+        description: 'Knowledge base 2 description',
+        aiContext: []
+      }
+
+      const details = { ...baseAiContextDetailsViewModel.details, AIKnowledgeBase: undefined }
+      const viewModel = {
+        ...baseAiContextDetailsViewModel,
+        details,
+        aiKnowledgeBases: [knowledgeBase1, knowledgeBase2]
+      }
+
+      store.overrideSelector(selectAiContextDetailsViewModel, viewModel)
+      store.refreshState()
+      fixture.detectChanges()
+
+      component.knowledgeBaseSuggestions$.subscribe((knowledgeBases) => {
+        expect(knowledgeBases.length).toBe(2)
+        expect(knowledgeBases).toContain(knowledgeBase1)
+        expect(knowledgeBases).toContain(knowledgeBase2)
+        done()
+      })
+    })
+
+    it('should emit empty array for knowledgeBaseSuggestions$ when aiKnowledgeBases is undefined', (done) => {
+      const details = { ...baseAiContextDetailsViewModel.details, AIKnowledgeBase: undefined }
+      const viewModel = {
+        ...baseAiContextDetailsViewModel,
+        details,
+        aiKnowledgeBases: undefined
+      }
+
+      store.overrideSelector(selectAiContextDetailsViewModel, viewModel)
+      store.refreshState()
+      fixture.detectChanges()
+
+      component.knowledgeBaseSuggestions$.subscribe((knowledgeBases) => {
+        expect(knowledgeBases).toEqual([])
         done()
       })
     })
@@ -1256,6 +1365,62 @@ describe('AiContextDetailsComponent', () => {
         expect(vectorDbs.length).toBe(1)
         expect(vectorDbs[0]).toEqual(otherVectorDb)
         expect(vectorDbs).not.toContain(selectedVectorDb)
+        done()
+      })
+    })
+
+    it('should emit correct vectorDbSuggestions$ for details without vector db', (done) => {
+      const vectorDb1 = {
+        id: 'id-1',
+        name: 'Vector DB 1',
+        description: 'Vector db 1 description',
+        vdb: 'vdb-1',
+        vdbCollection: 'collection-1',
+        aiContext: {}
+      }
+
+      const vectorDb2 = {
+        id: 'id-2',
+        name: 'Vector DB 2',
+        description: 'Vector db 2 description',
+        vdb: 'vdb-2',
+        vdbCollection: 'collection-2',
+        aiContext: {}
+      }
+
+      const details = { ...baseAiContextDetailsViewModel.details, aIKnowledgeVectorDb: undefined }
+      const viewModel = {
+        ...baseAiContextDetailsViewModel,
+        details,
+        aiKnowledgeVectorDbs: [vectorDb1, vectorDb2]
+      }
+
+      store.overrideSelector(selectAiContextDetailsViewModel, viewModel)
+      store.refreshState()
+      fixture.detectChanges()
+
+      component.vectorDbSuggestions$.subscribe((vectorDbs) => {
+        expect(vectorDbs.length).toBe(2)
+        expect(vectorDbs).toContain(vectorDb1)
+        expect(vectorDbs).toContain(vectorDb2)
+        done()
+      })
+    })
+
+    it('should emit empty array for vectorDbSuggestions$ when aiKnowledgeVectorDbs is undefined', (done) => {
+      const details = { ...baseAiContextDetailsViewModel.details, aIKnowledgeVectorDb: undefined }
+      const viewModel = {
+        ...baseAiContextDetailsViewModel,
+        details,
+        aiKnowledgeVectorDbs: undefined
+      }
+
+      store.overrideSelector(selectAiContextDetailsViewModel, viewModel)
+      store.refreshState()
+      fixture.detectChanges()
+
+      component.vectorDbSuggestions$.subscribe((vectorDbs) => {
+        expect(vectorDbs).toEqual([])
         done()
       })
     })

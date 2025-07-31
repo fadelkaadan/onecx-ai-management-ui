@@ -10,8 +10,8 @@ export const aiContextSearchSelectors = createChildSelectors(aiContextFeature.se
 export const selectResults = createSelector(aiContextSearchSelectors.selectResults, (results): RowListGridData[] => {
   return results.map((item) => ({
     imagePath: '',
-    id: item.id || '',
-    ...item
+    ...item,
+    id: item.id || ''
   }))
 })
 
