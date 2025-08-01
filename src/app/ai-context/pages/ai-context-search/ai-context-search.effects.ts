@@ -1,4 +1,4 @@
-import { Injectable, SkipSelf } from '@angular/core'
+import { Injectable } from '@angular/core'
 import { ActivatedRoute, Router } from '@angular/router'
 import { Actions, createEffect, ofType } from '@ngrx/effects'
 import { concatLatestFrom } from '@ngrx/operators'
@@ -22,7 +22,7 @@ export class AiContextSearchEffects {
   constructor(
     private portalDialogService: PortalDialogService,
     private actions$: Actions,
-    @SkipSelf() private route: ActivatedRoute,
+    private route: ActivatedRoute,
     private aiContextService: AIContextBffService,
     private router: Router,
     private store: Store,
