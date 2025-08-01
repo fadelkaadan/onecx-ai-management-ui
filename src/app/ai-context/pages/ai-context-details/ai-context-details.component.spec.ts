@@ -220,7 +220,7 @@ describe('AiContextDetailsComponent', () => {
     } as unknown as jest.Mocked<AIContextBffService>
 
     aiProviderService = {
-      searchAIProviders: jest.fn()
+      searchAIProvider: jest.fn()
     } as unknown as jest.Mocked<AIProviderBffService>
 
     aiKnowledgeBaseService = {
@@ -591,6 +591,40 @@ describe('AiContextDetailsComponent', () => {
         })
       })
 
+      it('should call getAIContextById with empty string when id is undefined', (done) => {
+        const details = { id: undefined }
+        const res = new HttpResponse<GetAIContextByIdResponse>({
+          body: { result: details },
+          status: 200
+        })
+
+        aiContextService.getAIContextById.mockReturnValue(of(res.body as any))
+        actions$.next(AiContextDetailsActions.navigatedToDetailsPage({ id: undefined }))
+
+        effects.loadAiContextById$.subscribe((action) => {
+          expect(aiContextService.getAIContextById).toHaveBeenCalledWith('')
+          expect(action).toEqual(AiContextDetailsActions.aiContextDetailsReceived({ details }))
+          done()
+        })
+      })
+
+      it('should call getAIContextById with empty string when id is empty string', (done) => {
+        const details = { id: '' }
+        const res = new HttpResponse<GetAIContextByIdResponse>({
+          body: { result: details },
+          status: 200
+        })
+
+        aiContextService.getAIContextById.mockReturnValue(of(res.body as any))
+        actions$.next(AiContextDetailsActions.navigatedToDetailsPage({ id: '' }))
+
+        effects.loadAiContextById$.subscribe((action) => {
+          expect(aiContextService.getAIContextById).toHaveBeenCalledWith('')
+          expect(action).toEqual(AiContextDetailsActions.aiContextDetailsReceived({ details }))
+          done()
+        })
+      })
+
       it('should dispatch aiContextAiKnowledgeBasesReceived on successful searchAIKnowledgeBases$', (done) => {
         const knowledgeBases = [{ id: 'kb1', name: 'Knowledge Base 1' }]
         const res = new HttpResponse<SearchAIKnowledgeBaseResponse>({
@@ -651,6 +685,66 @@ describe('AiContextDetailsComponent', () => {
               error
             })
           )
+          done()
+        })
+      })
+    })
+
+    describe('loadProviders$', () => {
+      it('should dispatch aiContextProvidersReceived on successful loadProviders$', (done) => {
+        const providers = [{ id: 'p1', name: 'Provider 1' }]
+        aiProviderService.searchAIProvider.mockReturnValue(of({ results: providers } as any))
+
+        actions$.next(AiContextDetailsActions.navigatedToDetailsPage({ id: '123' }))
+
+        effects.loadProviders$.subscribe((action) => {
+          expect(action).toEqual(
+            AiContextDetailsActions.aiContextProvidersReceived({
+              providers: providers
+            })
+          )
+          done()
+        })
+      })
+
+      it('should dispatch aiContextProvidersLoadingFailed on failed loadProviders$', (done) => {
+        const error = 'Failed to load providers'
+        aiProviderService.searchAIProvider.mockReturnValue(throwError(() => error))
+
+        actions$.next(AiContextDetailsActions.navigatedToDetailsPage({ id: '123' }))
+
+        effects.loadProviders$.subscribe((action) => {
+          expect(action).toEqual(AiContextDetailsActions.aiContextProvidersLoadingFailed({ error }))
+          done()
+        })
+      })
+    })
+
+    describe('loadVectorDbs$', () => {
+      it('should dispatch aiContextAiKnowledgeVectorDbsReceived on successful loadVectorDbs$', (done) => {
+        const vectorDbs = [{ id: 'vdb1', name: 'Vector DB 1' }]
+        aiKnowledgeVectorDbs.searchAIKnowledgeVectorDbs.mockReturnValue(of({ results: vectorDbs } as any))
+
+        actions$.next(AiContextDetailsActions.navigatedToDetailsPage({ id: '123' }))
+
+        effects.loadVectorDbs$.subscribe((action) => {
+          expect(action).toEqual(
+            AiContextDetailsActions.aiContextAiKnowledgeVectorDbsReceived({
+              aiKnowledgeVectorDbs: vectorDbs
+            })
+          )
+          done()
+        })
+      })
+
+      it('should dispatch aiContextAiKnowledgeVectorDbsLoadingFailed on failed loadVectorDbs$', (done) => {
+        const error = 'Failed to load vector dbs'
+        aiKnowledgeVectorDbs.searchAIKnowledgeVectorDbs.mockReturnValue(throwError(() => error))
+
+        actions$.next(AiContextDetailsActions.navigatedToDetailsPage({ id: '123' }))
+
+        effects.loadVectorDbs$.subscribe((action) => {
+          expect(action).toEqual(AiContextDetailsActions.aiContextAiKnowledgeVectorDbsLoadingFailed({ error }))
           done()
         })
       })
