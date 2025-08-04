@@ -9,10 +9,12 @@ import { AIContextBffService } from '../../../shared/generated'
 import { ExportDataService, PortalMessageService, PortalDialogService } from '@onecx/portal-integration-angular'
 import { AiContextSearchEffects } from './ai-context-search.effects'
 import { AiContextSearchActions } from './ai-context-search.actions'
-import { aiContextSearchSelectors } from './ai-context-search.selectors'
+import { aiContextSearchSelectors, selectAiContextSearchViewModel } from './ai-context-search.selectors'
 import { AiContextSearchCriteria } from './ai-context-search.parameters'
 import { initialState } from './ai-context-search.reducers'
 import { selectUrl } from 'src/app/shared/selectors/router.selectors'
+import { AiContextSearchViewModel } from './ai-context-search.viewmodel'
+import { AiContextCreateUpdateComponent } from './dialogs/ai-context-create-update/ai-context-create-update.component'
 
 describe('AiContextSearchEffects', () => {
   const mockActivatedRoute = {
@@ -749,6 +751,273 @@ describe('AiContextSearchEffects', () => {
         expect(aiContextService.deleteAIContext).toHaveBeenCalledWith('test-123')
         done()
       })
+    })
+  })
+
+  describe('createButtonClicked$', () => {
+    it('should open create dialog with correct parameters', (done) => {
+      const mockDialogResult = {
+        button: 'primary',
+        result: { name: 'New AI Context', description: 'Test description' }
+      }
+
+      portalDialogService.openDialog.mockReturnValue(of(mockDialogResult) as never)
+      aiContextService.createAIContext.mockReturnValue(of({}) as never)
+
+      effects.createButtonClicked$.subscribe(() => {
+        expect(portalDialogService.openDialog).toHaveBeenCalledWith(
+          'AI_CONTEXT_CREATE_UPDATE.CREATE.HEADER',
+          {
+            type: AiContextCreateUpdateComponent,
+            inputs: {
+              vm: {
+                itemToEdit: {}
+              }
+            }
+          },
+          'AI_CONTEXT_CREATE_UPDATE.CREATE.FORM.SAVE',
+          'AI_CONTEXT_CREATE_UPDATE.CREATE.FORM.CANCEL',
+          {
+            baseZIndex: 100
+          }
+        )
+        done()
+      })
+
+      actions$.next(AiContextSearchActions.createAiContextButtonClicked())
+    })
+
+    it('should create AI context and dispatch success action when dialog returns primary button with result', (done) => {
+      const mockAiContextData = { name: 'New AI Context', description: 'Test description' }
+      const mockDialogResult = {
+        button: 'primary',
+        result: mockAiContextData
+      }
+      const expectedCreateRequest = {
+        aiContextData: mockAiContextData
+      }
+
+      portalDialogService.openDialog.mockReturnValue(of(mockDialogResult) as never)
+      aiContextService.createAIContext.mockReturnValue(of({}) as never)
+
+      effects.createButtonClicked$.subscribe((action) => {
+        expect(aiContextService.createAIContext).toHaveBeenCalledWith(expectedCreateRequest)
+        expect(messageService.success).toHaveBeenCalledWith({
+          summaryKey: 'AI_CONTEXT_CREATE_UPDATE.CREATE.SUCCESS'
+        })
+        expect(action).toEqual(AiContextSearchActions.createAiContextSucceeded())
+        done()
+      })
+
+      actions$.next(AiContextSearchActions.createAiContextButtonClicked())
+    })
+
+    it('should dispatch cancelled action when dialog is closed without result', (done) => {
+      const mockDialogResult = null
+
+      portalDialogService.openDialog.mockReturnValue(of(mockDialogResult) as never)
+
+      effects.createButtonClicked$.subscribe((action) => {
+        expect(aiContextService.createAIContext).not.toHaveBeenCalled()
+        expect(action).toEqual(AiContextSearchActions.createAiContextCancelled())
+        done()
+      })
+
+      actions$.next(AiContextSearchActions.createAiContextButtonClicked())
+    })
+
+    it('should dispatch cancelled action when dialog secondary button is clicked', (done) => {
+      const mockDialogResult = {
+        button: 'secondary',
+        result: { name: 'Test', description: 'Test' }
+      }
+
+      portalDialogService.openDialog.mockReturnValue(of(mockDialogResult) as never)
+
+      effects.createButtonClicked$.subscribe((action) => {
+        expect(aiContextService.createAIContext).not.toHaveBeenCalled()
+        expect(action).toEqual(AiContextSearchActions.createAiContextCancelled())
+        done()
+      })
+
+      actions$.next(AiContextSearchActions.createAiContextButtonClicked())
+    })
+
+    it('should handle error when dialog result is missing despite primary button', (done) => {
+      const mockDialogResult = {
+        button: 'primary',
+        result: undefined
+      }
+
+      portalDialogService.openDialog.mockReturnValue(of(mockDialogResult) as never)
+
+      effects.createButtonClicked$.subscribe((action) => {
+        expect(messageService.error).toHaveBeenCalledWith({
+          summaryKey: 'AI_CONTEXT_CREATE_UPDATE.CREATE.ERROR'
+        })
+        expect(action).toEqual(
+          AiContextSearchActions.createAiContextFailed({
+            error: expect.any(Error)
+          })
+        )
+        done()
+      })
+
+      actions$.next(AiContextSearchActions.createAiContextButtonClicked())
+    })
+
+    it('should handle API error during creation', (done) => {
+      const mockAiContextData = { name: 'New AI Context', description: 'Test description' }
+      const mockDialogResult = {
+        button: 'primary',
+        result: mockAiContextData
+      }
+      const apiError = 'API Error'
+
+      portalDialogService.openDialog.mockReturnValue(of(mockDialogResult) as never)
+      aiContextService.createAIContext.mockReturnValue(throwError(() => apiError) as never)
+
+      effects.createButtonClicked$.subscribe((action) => {
+        expect(messageService.error).toHaveBeenCalledWith({
+          summaryKey: 'AI_CONTEXT_CREATE_UPDATE.CREATE.ERROR'
+        })
+        expect(action).toEqual(
+          AiContextSearchActions.createAiContextFailed({
+            error: apiError
+          })
+        )
+        done()
+      })
+
+      actions$.next(AiContextSearchActions.createAiContextButtonClicked())
+    })
+  })
+
+  describe('exportData$', () => {
+    it('should export CSV with correct parameters when export button is clicked', (done) => {
+      const mockColumns = [
+        { field: 'name', header: 'Name' },
+        { field: 'description', header: 'Description' }
+      ]
+      const mockResults = [
+        { id: '1', name: 'Context 1', description: 'Description 1' },
+        { id: '2', name: 'Context 2', description: 'Description 2' }
+      ]
+      const mockViewModel = {
+        resultComponentState: {
+          displayedColumns: mockColumns
+        },
+        results: mockResults
+      } as unknown as AiContextSearchViewModel
+
+      store.overrideSelector(selectAiContextSearchViewModel, mockViewModel)
+
+      effects.exportData$.subscribe(() => {
+        expect(exportDataService.exportCsv).toHaveBeenCalledWith(
+          mockColumns,
+          mockResults,
+          'AIContext.csv'
+        )
+        done()
+      })
+
+      actions$.next(AiContextSearchActions.exportButtonClicked())
+    })
+
+    it('should handle export with empty displayed columns', (done) => {
+      const mockResults = [
+        { id: '1', name: 'Context 1', description: 'Description 1' }
+      ]
+      const mockViewModel = {
+        resultComponentState: {
+          displayedColumns: undefined
+        },
+        results: mockResults
+      } as unknown as AiContextSearchViewModel
+
+      store.overrideSelector(selectAiContextSearchViewModel, mockViewModel)
+
+      effects.exportData$.subscribe(() => {
+        expect(exportDataService.exportCsv).toHaveBeenCalledWith(
+          [],
+          mockResults,
+          'AIContext.csv'
+        )
+        done()
+      })
+
+      actions$.next(AiContextSearchActions.exportButtonClicked())
+    })
+
+    it('should handle export with null resultComponentState', (done) => {
+      const mockResults = [
+        { id: '1', name: 'Context 1', description: 'Description 1' }
+      ]
+      const mockViewModel = {
+        resultComponentState: null,
+        results: mockResults
+      } as unknown as AiContextSearchViewModel
+
+      store.overrideSelector(selectAiContextSearchViewModel, mockViewModel)
+
+      effects.exportData$.subscribe(() => {
+        expect(exportDataService.exportCsv).toHaveBeenCalledWith(
+          [],
+          mockResults,
+          'AIContext.csv'
+        )
+        done()
+      })
+
+      actions$.next(AiContextSearchActions.exportButtonClicked())
+    })
+
+    it('should handle export with empty results', (done) => {
+      const mockColumns = [
+        { field: 'name', header: 'Name' },
+        { field: 'description', header: 'Description' }
+      ]
+      const mockViewModel = {
+        resultComponentState: {
+          displayedColumns: mockColumns
+        },
+        results: []
+      } as unknown as AiContextSearchViewModel
+
+      store.overrideSelector(selectAiContextSearchViewModel, mockViewModel)
+
+      effects.exportData$.subscribe(() => {
+        expect(exportDataService.exportCsv).toHaveBeenCalledWith(
+          mockColumns,
+          [],
+          'AIContext.csv'
+        )
+        done()
+      })
+
+      actions$.next(AiContextSearchActions.exportButtonClicked())
+    })
+  })
+
+  describe('displayError$', () => {
+    it('should display error message when aiContextSearchResultsLoadingFailed action is dispatched', (done) => {
+      effects.displayError$.subscribe(() => {
+        expect(messageService.error).toHaveBeenCalledWith({
+          summaryKey: 'AI_CONTEXT_SEARCH.ERROR_MESSAGES.SEARCH_RESULTS_LOADING_FAILED'
+        })
+        done()
+      })
+
+      actions$.next(AiContextSearchActions.aiContextSearchResultsLoadingFailed({ error: 'Test error' }))
+    })
+
+    it('should not display error message for actions not in errorMessages array', (done) => {
+      setTimeout(() => {
+        expect(messageService.error).not.toHaveBeenCalled()
+        done()
+      }, 0)
+
+      actions$.next(AiContextSearchActions.resetButtonClicked())
     })
   })
 })
