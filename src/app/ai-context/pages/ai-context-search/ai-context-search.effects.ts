@@ -253,7 +253,12 @@ export class AiContextSearchEffects {
             return of(AiContextSearchActions.deleteAiContextCancelled())
           }
           if (!itemToDelete || !itemToDelete.id) {
-            throw new Error('Item to delete or its ID not found!')
+            this.messageService.error({
+              summaryKey: 'AI_CONTEXT_DELETE.ERROR'
+            })
+            return of(AiContextSearchActions.deleteAiContextFailed({
+              error: 'Item to delete or its ID not found!'
+            }))
           }
 
           return this.aiContextService.deleteAIContext(itemToDelete.id).pipe(

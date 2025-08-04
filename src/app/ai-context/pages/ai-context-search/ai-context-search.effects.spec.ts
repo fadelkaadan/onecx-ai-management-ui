@@ -255,6 +255,25 @@ describe('AiContextSearchEffects', () => {
         done()
       })
     })
+
+    it('should handle Date objects in search criteria', (done) => {
+      const criteriaWithDate = {
+        ...mockCriteria,
+        startDate: new Date('2023-01-01'),
+        endDate: new Date('2023-12-31')
+      }
+
+      const searchSpy = jest.spyOn(aiContextService, 'searchAIContexts')
+
+      effects.performSearch(criteriaWithDate).subscribe(() => {
+        expect(searchSpy).toHaveBeenCalledWith({
+          ...mockCriteria,
+          startDate: '2023-01-01T00:00:00.000Z',
+          endDate: '2023-12-31T00:00:00.000Z'
+        })
+        done()
+      })
+    })
   })
 
   describe('refreshSearchAfterCreateUpdate$', () => {
@@ -423,6 +442,48 @@ describe('AiContextSearchEffects', () => {
       })
     })
 
+    it('should throw error when dialog result is missing', (done) => {
+      const mockDialogResult = {
+        button: 'primary',
+        result: null
+      }
+
+      portalDialogService.openDialog.mockReturnValue(of(mockDialogResult) as never)
+
+      const messageErrorSpy = jest.spyOn(messageService, 'error')
+
+      actions$.next(AiContextSearchActions.editAiContextButtonClicked({ id: 'test-123' }))
+
+      effects.editButtonClicked$.subscribe((action) => {
+        expect(action.type).toEqual(AiContextSearchActions.updateAiContextFailed.type)
+        expect(messageErrorSpy).toHaveBeenCalledWith({
+          summaryKey: 'AI_CONTEXT_CREATE_UPDATE.UPDATE.ERROR'
+        })
+        done()
+      })
+    })
+
+    it('should throw error when item ID is missing from dialog result', (done) => {
+      const mockDialogResult = {
+        button: 'primary',
+        result: { name: 'Updated Context' }
+      }
+
+      portalDialogService.openDialog.mockReturnValue(of(mockDialogResult) as never)
+
+      const messageErrorSpy = jest.spyOn(messageService, 'error')
+
+      actions$.next(AiContextSearchActions.editAiContextButtonClicked({ id: 'test-123' }))
+
+      effects.editButtonClicked$.subscribe((action) => {
+        expect(action.type).toEqual(AiContextSearchActions.updateAiContextFailed.type)
+        expect(messageErrorSpy).toHaveBeenCalledWith({
+          summaryKey: 'AI_CONTEXT_CREATE_UPDATE.UPDATE.ERROR'
+        })
+        done()
+      })
+    })
+
     it('should pass correct item to dialog based on action id', (done) => {
       const mockDialogResult = {
         button: 'secondary',
@@ -456,11 +517,9 @@ describe('AiContextSearchEffects', () => {
 
   describe('refreshSearchAfterDelete$', () => {
     beforeEach(() => {
-      // Mock the search criteria selector
       store.overrideSelector(aiContextSearchSelectors.selectCriteria, mockCriteria)
       store.refreshState()
 
-      // Mock the searchAIContexts service method with proper return type
       aiContextService.searchAIContexts.mockReturnValue(
         of({
           stream: [{ id: '3', name: 'Remaining Context' }],
@@ -493,7 +552,6 @@ describe('AiContextSearchEffects', () => {
     it('should handle search errors properly after delete', (done) => {
       const mockError = 'Refresh search after delete failed'
 
-      // Mock service to return an error observable
       aiContextService.searchAIContexts.mockReturnValue(throwError(() => mockError))
 
       actions$.next(AiContextSearchActions.deleteAiContextSucceeded())
@@ -516,7 +574,6 @@ describe('AiContextSearchEffects', () => {
         description: 'custom-desc'
       }
 
-      // Override with custom criteria
       store.overrideSelector(aiContextSearchSelectors.selectCriteria, customCriteria)
       store.refreshState()
 
@@ -650,6 +707,31 @@ describe('AiContextSearchEffects', () => {
         )
         done()
       })
+    })
+
+    it('should handle case when item to delete is not found', (done) => {
+      const mockDialogResult = {
+        button: 'primary',
+        result: null
+      }
+
+      const emptyResults = [{ id: 'other-id', name: 'Other Context' }]
+      store.overrideSelector(aiContextSearchSelectors.selectResults, emptyResults)
+      store.refreshState()
+
+      portalDialogService.openDialog.mockReturnValue(of(mockDialogResult) as never)
+
+      const messageErrorSpy = jest.spyOn(messageService, 'error')
+
+      effects.deleteButtonClicked$.subscribe((action) => {
+        expect(action.type).toEqual(AiContextSearchActions.deleteAiContextFailed.type)
+        expect(messageErrorSpy).toHaveBeenCalledWith({
+          summaryKey: 'AI_CONTEXT_DELETE.ERROR'
+        })
+        done()
+      })
+
+      actions$.next(AiContextSearchActions.deleteAiContextButtonClicked({ id: 'non-existent-id' }))
     })
 
     it('should find correct item to delete based on action id', (done) => {
